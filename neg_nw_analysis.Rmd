@@ -1,6 +1,6 @@
 ---
 title: "Negative Net Worth SCF 2019"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -164,9 +164,9 @@ neg_nw_wealth$prop <- wpct(neg_nw$INCOME_quintiles, neg_nw$WGT)
 
 # Export data
 
-write.csv(neg_nw_count, paste(getwd(), 
-                '\\neg_nw_count.csv', 
-                sep=''))
+#write.csv(neg_nw_count, paste(getwd(), 
+#                '\\neg_nw_count.csv', 
+#                sep=''))
 
 ```
 
