@@ -225,6 +225,9 @@ weighted.median(filter(neg_nw,neg_nw$VEH_INST > 0)$VEH_INST,
                             OTHDBT = 
 weighted.median(filter(neg_nw,neg_nw$OTHDBT > 0)$OTHDBT, 
                 filter(neg_nw,neg_nw$OTHDBT > 0)$WGT))                              
+
+# Export to csv 
+
 write.csv(debts_holding,  paste(getwd(), '\\csv-exports', 
                 '\\debts_holding.csv', 
                 sep=''))
