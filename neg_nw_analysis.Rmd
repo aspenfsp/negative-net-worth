@@ -96,8 +96,7 @@ scf_19$nw_scf_breaks <- cut(scf_19$NETWORTH,
 
 ## Share of households with negative net worth in 1989, 2007, and 2019. 
 
-I find that the share of households with negative net worth was 7.4% in 1989, 7.8% in 2007, and 10.4% in 2019. 
-
+I calculate the proportion of households in the SCF with negative net worth. 
 ```{r share net debtors of population}
 
 # 1989 (below process repeated for each year)
@@ -161,9 +160,9 @@ neg_nw_wealth$prop <- wpct(neg_nw$INCOME_quintiles, neg_nw$WGT)
 
 # Export data
 
-write.csv(neg_nw_count, paste(getwd(), 
-                '\\neg_nw_count.csv', 
-                sep=''))
+#write.csv(neg_nw_count, paste(getwd(), 
+#                '\\neg_nw_count.csv', 
+#                sep=''))
 
 ```
 

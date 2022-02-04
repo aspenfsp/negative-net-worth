@@ -1,33 +1,31 @@
-Negative Net Worth SCF 2019
+Analysis of Households with Negative Networth Using Data from the 2019
+Survey of Consumer Finances
 ================
 
-## Negative Net Worth Analysis
+## Share of households with negative net worth in 1989, 2007, and 2019.
 
-## Share of net debtors in overall population.
+I find that the share of households with negative net worth was 7.4% in
+1989, 7.8% in 2007, and 10.4% in 2019.
 
 ``` r
-# New variable that distinguishes net debt HHs from all HHs
+# 1989 (below process repeated for each year)
 
-scf_19 <- mutate(scf_19, 
-                 netdebt_status = ifelse(scf_19$NETWORTH < 0, 1, 0))
-
+# New binary variable that distinguishes net debt HHs from all HHs
+scf_89 <- mutate(scf_89, 
+                 netdebt_status = ifelse(scf_89$NETWORTH < 0, 1, 0))
 
 # Taking weighted share of net debt households and all else
-
-wpct(scf_19$netdebt_status, scf_19$WGT)
+wpct(scf_89$netdebt_status, scf_89$WGT)
 ```
 
-    ##         0         1 
-    ## 0.8956651 0.1043349
+    ##          0          1 
+    ## 0.92565811 0.07434189
 
 ``` r
-# New variable that distinguishes net debt HHs from all HHs
+# 2007
 
 scf_07 <- mutate(scf_07, 
                  netdebt_status = ifelse(scf_07$NETWORTH < 0, 1, 0))
-
-
-# Taking weighted share of net debt households and all else
 
 wpct(scf_07$netdebt_status, scf_07$WGT)
 ```
@@ -36,24 +34,26 @@ wpct(scf_07$netdebt_status, scf_07$WGT)
     ## 0.9223927 0.0776073
 
 ``` r
-# New variable that distinguishes net debt HHs from all HHs
+# 2019
 
-scf_89 <- mutate(scf_89, 
-                 netdebt_status = ifelse(scf_89$NETWORTH < 0, 1, 0))
+scf_19 <- mutate(scf_19, 
+                 netdebt_status = ifelse(scf_19$NETWORTH < 0, 1, 0))
 
-
-# Taking weighted share of net debt households and all else
-
-wpct(scf_89$netdebt_status, scf_89$WGT)
+wpct(scf_19$netdebt_status, scf_19$WGT)
 ```
 
-    ##          0          1 
-    ## 0.92565811 0.07434189
+    ##         0         1 
+    ## 0.8956651 0.1043349
 
-## Income quintile breakdowns
+## Income and net worth
+
+I calculate the differences in median income, assets, debt, and net
+worth between negative net worth households and all households. I also
+calculate the share of households with negative net worth by income
+quintile.
 
 ``` r
-# Creating a new subset of HHs with negative net worth
+# Creating a new data frame of households with negative net worth
 
 neg_nw <- filter(scf_19, scf_19$NETWORTH < 0)
 
@@ -72,7 +72,7 @@ weighted.median(scf_19$INCOME, scf_19$WGT)
     ## [1] 59050.84
 
 ``` r
-# Get median debt, asset and net worth values for all HHs with net debt
+# Getting median debt, asset and net worth values for all HHs with net debt
 
 neg_nw_wealth <- neg_nw %>%
   group_by(INCOME_quintiles) %>%
