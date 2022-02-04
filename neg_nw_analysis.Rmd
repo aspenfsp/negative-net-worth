@@ -625,28 +625,6 @@ wpct(neg_nw$HCUTFOOD, neg_nw$WGT)
 
 
 
-```{r Payday loan}
-
-wpct(scf_19$HPAYDAY, scf_19$WGT)
-
-wpct(neg_nw$HPAYDAY, neg_nw$WGT)
-
-
-scf_19$w_payday <- scf_19$HPAYDAY*scf_19$WGT
-
-payday <- scf_19 %>%
-  group_by(RACE) %>%
-  summarise(wprop = sum(w_payday > 0)/n(),
-            prop = sum(w_payday > 0)/n(),
-            n = n())
-
-payday_subset <- filter(scf_19, scf_19$HPAYDAY > 0)
-
-wpct(payday_subset$RACE, payday_subset$WGT)
-
-```
-
-
 ```{r young people net debtors?}
 
 # Create age groups 
