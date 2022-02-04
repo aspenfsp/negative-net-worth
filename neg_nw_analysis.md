@@ -1,11 +1,69 @@
-Analysis of Households with Negative Networth Using Data from the 2019
+Analysis of Households with Negative Net Worth Using Data from the 2019
 Survey of Consumer Finances
 ================
+Shehryar Nabi, Senior Research Associate, Aspen Institute Financial
+Security Program
 
-## Share of households with negative net worth in 1989, 2007, and 2019.
+## Breakdowns of age, race, income, and net worth
 
-I find that the share of households with negative net worth was 7.4% in
-1989, 7.8% in 2007, and 10.4% in 2019.
+Before calculating variables of interest, I first create variables that
+group data into age, race, income, and net worth categories.
+
+``` r
+# Create age groups 
+
+scf_19$age_group <- cut(scf_19$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+
+# Rename race categories
+
+scf_19$RACE[scf_19$RACE == 1] <- "White, non-Hispanic"
+scf_19$RACE[scf_19$RACE == 2] <- "Black, non-Hispanic"
+scf_19$RACE[scf_19$RACE == 3] <- "Hispanic"
+scf_19$RACE[scf_19$RACE == 5] <- "Other"
+
+
+# Create income quintiles 
+
+inc_quintile_breaks_19 <- c(weighted_networth_quantiles(scf_19$INCOME, 
+                                                  scf_19$WGT, 1/5))
+inc_quintile_breaks_19[1] <- inc_quintile_breaks_19[1] - 1
+scf_19$INCOME_quintiles <- cut(scf_19$INCOME,
+                            c(inc_quintile_breaks_19),
+                            labels = c("0-19.9", "20-39.9",
+                                   "40-59.9", "60-79.9", 
+                                   "80-100"))
+
+
+# SCF net worth quintiles 
+
+scf_19$nw_scf_breaks <- cut(scf_19$NETWORTH,
+    c(-955502, 12410, 121760, 404100, 1218737, 1967199000),
+    labels = c("Less than 25", "25-49.9",
+                "50-74.9", "75-89.9", 
+                "90-100"), na.rm = TRUE)
+```
+
+## Creating “other” debt variable
+
+For simplicity, I combine “other” SCF debt types into one “other” debt
+variable.
+
+``` r
+# Debt
+
+otherdebt <- scf_19 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_19$OTHDBT <- rowSums(otherdebt)
+```
+
+## Share of households with negative net worth in 1989, 2007, and 2019
+
+I calculate the proportion of households in the SCF with negative net
+worth.
 
 ``` r
 # 1989 (below process repeated for each year)
@@ -82,30 +140,42 @@ neg_nw_wealth <- neg_nw %>%
             n = n())
 
 
-# Get share of net debtors by income quintile
+# Getting share of net debtors by income quintile
 
 neg_nw_wealth$prop <- wpct(neg_nw$INCOME_quintiles, neg_nw$WGT)
 
 
-# Export data
+# Exporting data
 
-#write.csv(neg_nw_count, paste(getwd(), 
-#                '\\neg_nw_count.csv', 
-#                sep=''))
+write.csv(neg_nw_wealth, paste(getwd(), '\\csv-exports', 
+                '\\neg_nw_wealth.csv', 
+                sep=''))
 ```
 
 ## Net debtors by age group and race
 
+I find the age distribution of households with negative net worth
+compared to overall households. I also calculate the proportion of
+households with net debt by race and age.
+
 ``` r
-# Create three age categories
+# Getting the distribution of ages for negative net worth HHs and overall
 
-scf_19$age_group <- cut(scf_19$AGE,
-                            c(17, 34, 54, 96),
-                            labels = c("Under 35", "35-54",
-                                   "Over 55"))
+wpct(scf_19$age_group, scf_19$WGT)
+```
 
+    ##  Under 35     35-54   Over 55 
+    ## 0.2087219 0.3377451 0.4535330
 
-# Find share of net debtors by age group and race
+``` r
+wpct(neg_nw$age_group, neg_nw$WGT)
+```
+
+    ##  Under 35     35-54   Over 55 
+    ## 0.4998895 0.3223889 0.1777215
+
+``` r
+# Finding share of HHs with net debt and debt types by age group and race
 
 prop_nd_race <- scf_19 %>%
   group_by(age_group, RACE) %>%
@@ -122,167 +192,17 @@ prop_nd_race <- scf_19 %>%
     ## `summarise()` has grouped output by 'age_group'. You can override using the `.groups` argument.
 
 ``` r
-neg_nw$age_group <- cut(neg_nw$AGE,
-                            c(17, 34, 54, 96),
-                            labels = c("Under 35", "35-54",
-                                   "Over 55"))
+# Exporting to CSV 
 
-prop2 <- neg_nw %>%
-  group_by(age_group, RACE) %>%
-    summarise(prop_edu = wpct(EDN_INST > 0, WGT)[1],
-            count = n())
-```
-
-    ## `summarise()` has grouped output by 'age_group'. You can override using the `.groups` argument.
-
-``` r
-# age distribution
-
-wpct(scf_19$age_group, scf_19$WGT)
-```
-
-    ##  Under 35     35-54   Over 55 
-    ## 0.2087219 0.3377451 0.4535330
-
-``` r
-wpct(neg_nw$age_group, neg_nw$WGT)
-```
-
-    ##  Under 35     35-54   Over 55 
-    ## 0.4998895 0.3223889 0.1777215
-
-``` r
-# Export to CSV 
-
-write.csv(prop_nd_race, paste(getwd(), 
+write.csv(prop_nd_race, paste(getwd(), '\\csv-exports', 
                 '\\prop_nd_race.csv', 
                 sep=''))
 ```
 
-## Debt and Asset Shares Overall
+## Debt portfolios
 
-``` r
-# Total debt share 
-
-all_debt <- select(neg_nw, MRTHEL, RESDBT, CCBAL, EDN_INST, VEH_INST, OTHDBT, WGT)
-
-w_all_debt <- apply(all_debt, 2, function(x,w) {x*w}, w = all_debt$WGT)
-
-totals <- apply(w_all_debt, 2, sum)
-totals[4]/sum(totals)
-```
-
-    ##  EDN_INST 
-    ## 0.4418227
-
-## Asset and Debt Mixes
-
-``` r
-# Asset mix
-
-# Isolating assets
-
-assets_negnw_list <- select(neg_nw, LIQ, RETQLIQ, OTHFIN, SECURITIES, 
-                     VEHIC, HOUSES, BUS, OTHNFIN, NONRES, WGT)
-
-
-# Creating new weighted percentage function to use within apply function 
-
-new_wpct <- function(x, w) {
-  wpct(x > 0, w)
-}
-
-
-# Creating dataframe of median asset values and % holding them 
-
-assets_negnw <- data.frame(med = apply(assets_negnw_list, 
-                                       2, 
-                                       weighted.median, 
-                                       w = assets_negnw_list$WGT))
-
-assets_negnw$prop <- t(data.frame(apply(assets_negnw_list, 
-                                        2, 
-                                        new_wpct, 
-                                        w = assets_negnw$WGT))[1,])                         
-assets_negnw <- assets_negnw[-c(10), ]                       
-         
-                           
-# Export to csv
-
-write.csv(assets_negnw,  paste(getwd(), 
-                '\\assets_negnw.csv', 
-                sep=''))
-
-
-
-# Debt mix 
-
-# Isolating debts
-
-debt_negnw_list <- select(neg_nw, MRTHEL, RESDBT, CCBAL, EDN_INST, VEH_INST, OTHDBT, WGT)
-
-
-# Creating dataframe of median debt values and % holding them
-
-debt_negnw <- data.frame(med = apply(debt_negnw_list,
-                                     2,
-                                     weighted.median,
-                                     w = debt_negnw_list$WGT))
-
-debt_negnw$prop <- t(data.frame(apply(debt_negnw_list, 
-                                        2, 
-                                        new_wpct, 
-                                        w = debt_negnw_list$WGT))[1,]) 
-
-debt_negnw <- debt_negnw[-c(7), ] 
-
-
-# checking sample sizes
-
-sum(debt_negnw_list$MRTHEL > 0)
-```
-
-    ## [1] 344
-
-``` r
-sum(debt_negnw_list$RESDBT > 0)
-```
-
-    ## [1] 32
-
-``` r
-sum(debt_negnw_list$CCBAL > 0)
-```
-
-    ## [1] 1613
-
-``` r
-sum(debt_negnw_list$EDN_INST > 0)
-```
-
-    ## [1] 1802
-
-``` r
-sum(debt_negnw_list$VEH_INST > 0)
-```
-
-    ## [1] 1105
-
-``` r
-sum(debt_negnw_list$OTHDBT > 0)
-```
-
-    ## [1] 872
-
-``` r
-# Exporting to csv
-
-write.csv(debt_negnw,  paste(getwd(), 
-                '\\debt_negnw.csv', 
-                sep=''))
-```
-
-## Debt mix among those holding
+I calculate the median value per debt type among households holding it
+for both households with negative net worth and overall.
 
 ``` r
 # Calculating median debt value for select debt types among net debtors 
@@ -305,46 +225,15 @@ weighted.median(filter(neg_nw,neg_nw$VEH_INST > 0)$VEH_INST,
                             OTHDBT = 
 weighted.median(filter(neg_nw,neg_nw$OTHDBT > 0)$OTHDBT, 
                 filter(neg_nw,neg_nw$OTHDBT > 0)$WGT))                              
-write.csv(debts_holding,  paste(getwd(), 
+write.csv(debts_holding,  paste(getwd(), '\\csv-exports', 
                 '\\debts_holding.csv', 
                 sep=''))
-
-nrow(filter(neg_nw, neg_nw$RESDBT > 0))
 ```
-
-    ## [1] 32
-
-``` r
-nrow(filter(neg_nw, neg_nw$MRTHEL > 0))
-```
-
-    ## [1] 344
-
-``` r
-nrow(filter(neg_nw, neg_nw$CCBAL > 0))
-```
-
-    ## [1] 1613
-
-``` r
-nrow(filter(neg_nw, neg_nw$EDN_INST > 0))
-```
-
-    ## [1] 1802
-
-``` r
-nrow(filter(neg_nw, neg_nw$VEH_INST > 0))
-```
-
-    ## [1] 1105
-
-``` r
-nrow(filter(neg_nw, neg_nw$OTHDBT > 0))
-```
-
-    ## [1] 872
 
 ## Racial distribution of net debtors
+
+I calculate the racial distribution of households with negative net
+worth and households overall.
 
 ``` r
 # Data frame comparing racial breakdown of all HHs vs net debtors
@@ -355,135 +244,41 @@ race_scf_netdebtors <- data.frame(scf = wpct(scf_19$RACE,
                                                      neg_nw$WGT))
 
 
-# Get sample sizes for each race in net debt 
-
-count_nd <- neg_nw %>%
-  group_by(RACE) %>%
-  summarise(n = n())
-
 # Exporting data 
 
-write.csv(race_scf_netdebtors,  paste(getwd(), 
+write.csv(race_scf_netdebtors,  paste(getwd(), '\\csv-exports', 
                 '\\race_scf_netdebtors.csv', 
                 sep=''))
 ```
 
-## Measures of Debt Burden
+## Education level
 
-## Income to Debt Ratio
-
-``` r
-# Debt to income ratio compared to overall population
-
-weighted.median(neg_nw$DEBT2INC, neg_nw$WGT)
-```
-
-    ## [1] 1.16185
+I calculate the share of households by education level for those with
+negative net worth and overall. See here for the level of education the
+numbered categories correspond to:
+<https://sda.berkeley.edu/sdaweb/docs/scfcomb2019/DOC/hcbk0001.htm#EDCL>.
 
 ``` r
-weighted.median(scf_19$DEBT2INC, scf_19$WGT)
+# Education levels for all HHs and net worth HHs
+
+wpct(scf_19$EDCL, scf_19$WGT)
 ```
 
-    ## [1] 0.4679763
-
-## Deliquent payments
+    ##         1         2         3         4 
+    ## 0.1072253 0.2448393 0.2846868 0.3632485
 
 ``` r
-# Late payment in the last year 
-
-nrow(filter(scf_19, scf_19$LATE == 1))
+wpct(neg_nw$EDCL, neg_nw$WGT)
 ```
 
-    ## [1] 3173
-
-``` r
-nrow(filter(neg_nw, neg_nw$LATE == 1))
-```
-
-    ## [1] 911
-
-``` r
-wpct(scf_19$LATE, scf_19$WGT)
-```
-
-    ##         0         1 
-    ## 0.8769632 0.1230368
-
-``` r
-wpct(neg_nw$LATE, neg_nw$WGT)
-```
-
-    ##         0         1 
-    ## 0.6666086 0.3333914
-
-``` r
-# Payment past 60 days due 
-
-nrow(filter(scf_19, scf_19$LATE60 == 1))
-```
-
-    ## [1] 1184
-
-``` r
-nrow(filter(neg_nw, neg_nw$LATE60 == 1))
-```
-
-    ## [1] 462
-
-``` r
-wpct(scf_19$LATE60, scf_19$WGT)
-```
-
-    ##          0          1 
-    ## 0.95366669 0.04633331
-
-``` r
-wpct(neg_nw$LATE60, neg_nw$WGT)
-```
-
-    ##         0         1 
-    ## 0.8394062 0.1605938
-
-## Age group comparison
-
-``` r
-weighted.median(scf_19$AGE, scf_19$WGT)
-```
-
-    ## [1] 52
-
-``` r
-weighted.median(neg_nw$AGE, neg_nw$WGT)
-```
-
-    ## [1] 34.39521
-
-``` r
-wpct(neg_nw$age_group, neg_nw$WGT)
-```
-
-    ##  Under 35     35-54   Over 55 
-    ## 0.4998895 0.3223889 0.1777215
+    ##          1          2          3          4 
+    ## 0.07839683 0.16360847 0.37463233 0.38336238
 
 ## Family structure and gender
 
 ``` r
 # Family structure
 
-
-
-nrow(filter(scf_19, scf_19$FAMSTRUCT == 2))
-```
-
-    ## [1] 3770
-
-``` r
-nrow(filter(neg_nw, neg_nw$FAMSTRUCT == 2))
-```
-
-    ## [1] 776
-
-``` r
 wpct(scf_19$FAMSTRUCT, scf_19$WGT)
 ```
 
@@ -500,18 +295,6 @@ wpct(neg_nw$FAMSTRUCT, neg_nw$WGT)
 ``` r
 # Gender
 
-nrow(filter(scf_19, scf_19$HHSEX == 2))
-```
-
-    ## [1] 6465
-
-``` r
-nrow(filter(neg_nw, neg_nw$HHSEX == 2))
-```
-
-    ## [1] 1106
-
-``` r
 wpct(scf_19$HHSEX, scf_19$WGT)
 ```
 
@@ -528,20 +311,6 @@ wpct(neg_nw$HHSEX, neg_nw$WGT)
 ``` r
 # Gender breakdown of single parents
 
-nrow(filter(filter(scf_19, scf_19$FAMSTRUCT == 1),
-       filter(scf_19, scf_19$FAMSTRUCT == 1)$HHSEX == 2))
-```
-
-    ## [1] 2150
-
-``` r
-nrow(filter(filter(neg_nw, neg_nw$FAMSTRUCT == 1),
-       filter(neg_nw, neg_nw$FAMSTRUCT == 1)$HHSEX == 2))
-```
-
-    ## [1] 466
-
-``` r
 wpct(filter(scf_19, scf_19$FAMSTRUCT == 1)$HHSEX,
      filter(scf_19, scf_19$FAMSTRUCT == 1)$WGT)
 ```
@@ -575,332 +344,57 @@ wpct(filter(neg_nw, neg_nw$HHSEX == 2)$FAMSTRUCT,
     ##          1          2          3          4          5 
     ## 0.40444361 0.38155795 0.18069860 0.01897267 0.01432717
 
-## Housing status
+## Measures of Debt Burden
+
+The following sections display code used to calculate two indicators of
+debt burden: income-to-debt ratios and delinquent payments,
+
+## Income to Debt Ratio
 
 ``` r
-wpct(scf_19$HOUSECL, scf_19$WGT)
+# Debt to income ratio compared to overall population
+
+weighted.median(neg_nw$DEBT2INC, neg_nw$WGT)
 ```
 
-    ##         1         2 
-    ## 0.6489863 0.3510137
+    ## [1] 1.16185
 
 ``` r
-wpct(neg_nw$HOUSECL, neg_nw$WGT)
+weighted.median(scf_19$DEBT2INC, scf_19$WGT)
 ```
 
-    ##         1         2 
-    ## 0.1887738 0.8112262
+    ## [1] 0.4679763
 
-## Education level
-
-``` r
-# Education levels for all HHs
-wpct(scf_19$EDCL, scf_19$WGT)
-```
-
-    ##         1         2         3         4 
-    ## 0.1072253 0.2448393 0.2846868 0.3632485
+## Deliquent payments
 
 ``` r
-# Education levels for HHs with negative net worth
-wpct(neg_nw$EDCL, neg_nw$WGT)
-```
+# Late payment in the last year 
 
-    ##          1          2          3          4 
-    ## 0.07839683 0.16360847 0.37463233 0.38336238
-
-``` r
-# Combining HS and no HS
-sum(wpct(scf_19$EDCL, scf_19$WGT)[1], wpct(scf_19$EDCL, scf_19$WGT)[2])
-```
-
-    ## [1] 0.3520647
-
-``` r
-sum(wpct(neg_nw$EDCL, neg_nw$WGT)[1], wpct(neg_nw$EDCL, neg_nw$WGT)[2])
-```
-
-    ## [1] 0.2420053
-
-``` r
-# Breakdown of some college by race
-
-wpct(filter(neg_nw, neg_nw$EDCL == 3)$RACE,
-     filter(neg_nw, neg_nw$EDCL == 3)$WGT)
-```
-
-    ## Black, non-Hispanic            Hispanic               Other White, non-Hispanic 
-    ##          0.31456840          0.08416106          0.03890382          0.56236673
-
-``` r
-wpct(scf_19$OCCAT1, scf_19$WGT)
-```
-
-    ##          1          2          3          4 
-    ## 0.57913929 0.10830557 0.27054535 0.04200979
-
-``` r
-wpct(neg_nw$OCCAT1, neg_nw$WGT)
-```
-
-    ##          1          2          3          4 
-    ## 0.73478773 0.05477638 0.13097402 0.07946188
-
-``` r
-wpct(scf_19$OCCAT2, scf_19$WGT)
-```
-
-    ##         1         2         3         4 
-    ## 0.2953042 0.2053901 0.1867506 0.3125551
-
-``` r
-wpct(neg_nw$OCCAT2, neg_nw$WGT)
-```
-
-    ##         1         2         3         4 
-    ## 0.3354621 0.2684323 0.1856697 0.2104359
-
-``` r
-# Labor force participation 
-
-wpct(scf_19$LF, scf_19$WGT)
+wpct(scf_19$LATE, scf_19$WGT)
 ```
 
     ##         0         1 
-    ## 0.2877515 0.7122485
+    ## 0.8769632 0.1230368
 
 ``` r
-wpct(neg_nw$LF, neg_nw$WGT)
+wpct(neg_nw$LATE, neg_nw$WGT)
 ```
 
     ##         0         1 
-    ## 0.1650558 0.8349442
+    ## 0.6666086 0.3333914
 
 ``` r
-nrow(filter(scf_19, scf_19$TURNDOWN == 1))
-```
+# Payment past 60 days due 
 
-    ## [1] 2706
-
-``` r
-nrow(filter(neg_nw, neg_nw$TURNDOWN == 1))
-```
-
-    ## [1] 711
-
-``` r
-wpct(scf_19$TURNDOWN, scf_19$WGT)
-```
-
-    ##         0         1 
-    ## 0.8929811 0.1070189
-
-``` r
-wpct(neg_nw$TURNDOWN, neg_nw$WGT)
-```
-
-    ##         0         1 
-    ## 0.7326868 0.2673132
-
-``` r
-nrow(filter(scf_19, scf_19$BNKRUPLAST5 == 1))
-```
-
-    ## [1] 495
-
-``` r
-nrow(filter(neg_nw, neg_nw$BNKRUPLAST5 == 1))
-```
-
-    ## [1] 85
-
-``` r
-wpct(scf_19$BNKRUPLAST5, scf_19$WGT)
+wpct(scf_19$LATE60, scf_19$WGT)
 ```
 
     ##          0          1 
-    ## 0.98040561 0.01959439
+    ## 0.95366669 0.04633331
 
 ``` r
-wpct(neg_nw$BNKRUPLAST5, neg_nw$WGT)
-```
-
-    ##          0          1 
-    ## 0.96782608 0.03217392
-
-``` r
-wpct(scf_19$FORECLLAST5, scf_19$WGT)
-```
-
-    ##          0          1 
-    ## 0.98705142 0.01294858
-
-``` r
-wpct(neg_nw$FORECLLAST5, neg_nw$WGT)
-```
-
-    ##          0          1 
-    ## 0.98603017 0.01396983
-
-``` r
-wpct(scf_19$NOCCBAL, scf_19$WGT)
-```
-
-    ##        0        1 
-    ## 0.439593 0.560407
-
-``` r
-wpct(neg_nw$NOCCBAL, neg_nw$WGT)
+wpct(neg_nw$LATE60, neg_nw$WGT)
 ```
 
     ##         0         1 
-    ## 0.6160212 0.3839788
-
-``` r
-wpct(scf_19$EXPENSHILO, scf_19$WGT)
-```
-
-    ##          1          2          3 
-    ## 0.23317724 0.04364993 0.72317283
-
-``` r
-wpct(neg_nw$EXPENSHILO, neg_nw$WGT)
-```
-
-    ##          1          2          3 
-    ## 0.30999967 0.04902132 0.64097901
-
-``` r
-wpct(scf_19$SAVED, scf_19$WGT)
-```
-
-    ##         0         1 
-    ## 0.4143882 0.5856118
-
-``` r
-wpct(neg_nw$SAVED, neg_nw$WGT)
-```
-
-    ##         0         1 
-    ## 0.5887916 0.4112084
-
-``` r
-wpct(scf_19$WSAVED, scf_19$WGT)
-```
-
-    ##         1         2         3 
-    ## 0.1305858 0.2838023 0.5856118
-
-``` r
-wpct(neg_nw$WSAVED, neg_nw$WGT)
-```
-
-    ##         1         2         3 
-    ## 0.2558673 0.3329242 0.4112084
-
-``` r
-wpct(scf_19$HBORRALT, scf_19$WGT)
-```
-
-    ##          0          1 
-    ## 0.98895161 0.01104839
-
-``` r
-wpct(neg_nw$HBORRALT, neg_nw$WGT)
-```
-
-    ##          0          1 
-    ## 0.98658005 0.01341995
-
-``` r
-wpct(scf_19$NOFINRISK, scf_19$WGT)
-```
-
-    ##         0         1 
-    ## 0.6076206 0.3923794
-
-``` r
-wpct(neg_nw$NOFINRISK, neg_nw$WGT)
-```
-
-    ##         0         1 
-    ## 0.6220468 0.3779532
-
-``` r
-wpct(scf_19$HCUTFOOD, scf_19$WGT)
-```
-
-    ##          0          1 
-    ## 0.96247782 0.03752218
-
-``` r
-wpct(neg_nw$HCUTFOOD, neg_nw$WGT)
-```
-
-    ##          0          1 
-    ## 0.98026546 0.01973454
-
-``` r
-# Create age groups 
-
-range(scf_19$AGE)
-```
-
-    ## [1] 18 95
-
-``` r
-scf_19$age_group <- cut(scf_19$AGE,
-                            c(17, 35, 45, 55, 65, 75, 96),
-                            labels = c("Less than 35", "35-44",
-                                   "45-54", "55-64", 
-                                   "65-74", "75 or older"))
-
-
-scf_19$w_nw <- scf_19$NETWORTH*scf_19$WGT
-
-
-neg_nw$w_nw <- neg_nw$NETWORTH*neg_nw$WGT
-
-neg_nw$age_group <- cut(neg_nw$AGE,
-                            c(17, 35, 45, 55, 65, 75, 96),
-                            labels = c("Less than 35", "35-44",
-                                   "45-54", "55-64", 
-                                   "65-74", "75 or older"))
-
-netdebt_age <- neg_nw %>%
-  group_by(age_group) %>%
-  summarise(prop = n()/2540,
-            n = n())
-```
-
-``` r
-wpct(filter(scf_19, scf_19$EDN_INST > 0)$NETWORTH < 0,
-     filter(scf_19, scf_19$EDN_INST > 0)$WGT)
-```
-
-    ##      TRUE     FALSE 
-    ## 0.3512502 0.6487498
-
-``` r
-with_edu <- filter(scf_19, scf_19$EDN_INST > 0)
-
-
-
-edu_stats <- with_edu %>%
-  group_by(age_group) %>%
-  summarise(prop = sum(w_nw < 0)/n(),
-            med = weighted.median(EDN_INST, WGT))
-```
-
-``` r
-weighted.mean(neg_nw$KIDS, neg_nw$WGT)
-```
-
-    ## [1] 0.7251194
-
-``` r
-wpct(neg_nw$FAMSTRUCT, neg_nw$WGT)
-```
-
-    ##         1         2         3         4         5 
-    ## 0.1961853 0.2976189 0.1085989 0.2078087 0.1897882
+    ## 0.8394062 0.1605938
