@@ -1,0 +1,2254 @@
+---
+title: "Net Debt Blog"
+output: html_document
+---
+
+---
+title: "Analysis of Households with Negative Net Worth Using Data from the 2019 Survey of Consumer Finances"
+author: Shehryar Nabi, Senior Research Associate, Aspen Institute Financial Security Program
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Set working directory
+setwd("C:/Users/snabi/OneDrive - The Aspen Institute/Documents/Research/GitHub/negative-net-worth")
+
+# Load libraries
+library(tidyverse)
+library(ggplot2)
+library(spatstat)
+library(survey)
+library(magrittr)
+library(expss)
+library(weights)
+
+# Read in data
+
+# 1989
+
+scf_89_master <- read.csv("SCFP1989.csv")
+scf_89 <- scf_89_master
+
+# Age groups 
+
+scf_89$age_group <- cut(scf_89$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_89 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_89$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_89, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_89, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_89, c(ORESRE, NNRESRE, WGT))
+
+scf_89$SECURITIES <- rowSums(securities[1:4])
+scf_89$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_89$NONRES <- rowSums(nonres[1:2])
+
+
+# 1992
+
+scf_92_master <- read.csv("SCFP1992.csv")
+scf_92 <- scf_92_master
+
+# Age groups 
+
+scf_92$age_group <- cut(scf_92$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_92 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_92$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_92, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_92, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_92, c(ORESRE, NNRESRE, WGT))
+
+scf_92$SECURITIES <- rowSums(securities[1:4])
+scf_92$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_92$NONRES <- rowSums(nonres[1:2])
+
+
+# 1995
+
+scf_95_master <- read.csv("SCFP1995.csv")
+scf_95 <- scf_95_master
+
+# Age groups 
+
+scf_95$age_group <- cut(scf_95$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_95 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_95$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_95, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_95, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_95, c(ORESRE, NNRESRE, WGT))
+
+scf_95$SECURITIES <- rowSums(securities[1:4])
+scf_95$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_95$NONRES <- rowSums(nonres[1:2])
+
+
+# 1998
+
+scf_98_master <- read.csv("SCFP1998.csv")
+scf_98 <- scf_98_master
+
+# Age groups 
+
+scf_98$age_group <- cut(scf_98$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_98 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_98$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_98, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_98, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_98, c(ORESRE, NNRESRE, WGT))
+
+scf_98$SECURITIES <- rowSums(securities[1:4])
+scf_98$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_98$NONRES <- rowSums(nonres[1:2])
+
+
+# 2001
+
+scf_01_master <- read.csv("SCFP2001.csv")
+scf_01 <- scf_01_master
+
+# Age groups 
+
+scf_01$age_group <- cut(scf_01$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_01 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_01$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_01, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_01, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_01, c(ORESRE, NNRESRE, WGT))
+
+scf_01$SECURITIES <- rowSums(securities[1:4])
+scf_01$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_01$NONRES <- rowSums(nonres[1:2])
+
+
+# 2004
+
+scf_04_master <- read.csv("SCFP2004.csv")
+scf_04 <- scf_04_master
+
+# Age groups 
+
+scf_04$age_group <- cut(scf_04$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_04 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_04$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_04, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_04, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_04, c(ORESRE, NNRESRE, WGT))
+
+scf_04$SECURITIES <- rowSums(securities[1:4])
+scf_04$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_04$NONRES <- rowSums(nonres[1:2])
+
+
+# 2007
+ 
+scf_07_master <- read.csv("SCFP2007.csv")
+scf_07 <- scf_07_master
+
+# Age groups 
+
+scf_07$age_group <- cut(scf_07$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_07 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_07$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_07, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_07, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_07, c(ORESRE, NNRESRE, WGT))
+
+scf_07$SECURITIES <- rowSums(securities[1:4])
+scf_07$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_07$NONRES <- rowSums(nonres[1:2])
+
+
+# 2010
+
+scf_10_master <- read.csv("SCFP2010.csv")
+scf_10 <- scf_10_master
+
+# Age groups 
+
+scf_10$age_group <- cut(scf_10$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_10 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_10$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_10, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_10, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_10, c(ORESRE, NNRESRE, WGT))
+
+scf_10$SECURITIES <- rowSums(securities[1:4])
+scf_10$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_10$NONRES <- rowSums(nonres[1:2])
+
+
+# 2013
+
+scf_13_master <- read.csv("SCFP2013.csv")
+scf_13 <- scf_13_master
+
+# Age groups 
+
+scf_13$age_group <- cut(scf_13$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_13 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_13$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_13, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_13, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_13, c(ORESRE, NNRESRE, WGT))
+
+scf_13$SECURITIES <- rowSums(securities[1:4])
+scf_13$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_13$NONRES <- rowSums(nonres[1:2])
+
+
+# 2016
+
+scf_16_master <- read.csv("SCFP2016.csv")
+scf_16 <- scf_16_master
+
+# Age groups 
+
+scf_16$age_group <- cut(scf_16$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+
+# Debt
+
+otherdebt <- scf_16 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_16$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_16, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_16, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_16, c(ORESRE, NNRESRE, WGT))
+
+scf_16$SECURITIES <- rowSums(securities[1:4])
+scf_16$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_16$NONRES <- rowSums(nonres[1:2])
+
+
+# 2019
+
+scf_19_master <- read.csv("SCFP2019.csv")
+scf_19 <- scf_19_master
+
+# Age groups 
+
+scf_19$age_group <- cut(scf_19$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+# Debt
+
+otherdebt <- scf_19 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_19$OTHDBT <- rowSums(otherdebt)
+
+# Assets 
+
+securities <- select(scf_19, c(NMMF, SAVBND, STOCKS, BOND, WGT))
+other_fin <- select(scf_19, c(CDS, CASHLI, OTHMA, OTHFIN, WGT))
+nonres <- select(scf_19, c(ORESRE, NNRESRE, WGT))
+
+scf_19$SECURITIES <- rowSums(securities[1:4])
+scf_19$OTHFIN_COMPLETE <- rowSums(other_fin[1:4])
+scf_19$NONRES <- rowSums(nonres[1:2])
+
+
+# Disable scientific notation
+options(scipen = 999)
+
+
+# Functions # 
+
+# Faster weighted quantile function
+weighted.quant <- function(var, weight, quantile) {
+  weighted.quantile(var, weight, probs = seq(0, 1, quantile))
+}
+
+
+# Get weighted net worth quantile breaks
+weighted_networth_quantiles <- function(var, weight, quantile) {
+  df <- data.frame(weighted.quant(var, weight, quantile))
+  return(c(df[,1]))
+}
+
+
+# Rename race categories
+
+scf_19$RACE[scf_19$RACE == 1] <- "White, non-Hispanic"
+scf_19$RACE[scf_19$RACE == 2] <- "Black, non-Hispanic"
+scf_19$RACE[scf_19$RACE == 3] <- "Hispanic"
+scf_19$RACE[scf_19$RACE == 5] <- "Other"
+
+
+
+# Create income quintiles 
+inc_quintile_breaks_19 <- c(weighted_networth_quantiles(scf_19$INCOME, 
+                                                  scf_19$WGT, 1/5))
+inc_quintile_breaks_19[1] <- inc_quintile_breaks_19[1] - 1
+scf_19$INCOME_quintiles <- cut(scf_19$INCOME,
+                            c(inc_quintile_breaks_19),
+                            labels = c("0-19.9", "20-39.9",
+                                   "40-59.9", "60-79.9", 
+                                   "80-100"))
+
+
+# SCF net worth quintiles 
+scf_19$nw_scf_breaks <- cut(scf_19$NETWORTH,
+    c(-955502, 12410, 121760, 404100, 1218737, 1967199000),
+    labels = c("Less than 25", "25-49.9",
+                "50-74.9", "75-89.9", 
+                "90-100"), na.rm = TRUE)
+
+
+# Create age groups 
+
+scf_19$age_group <- cut(scf_19$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+```
+
+
+## Breakdowns of age, race, income, and net worth
+
+Before calculating variables of interest, I first create variables that group data into age, race, income, and net worth categories. 
+
+```{r groups}
+
+# Create age groups 
+
+scf_19$age_group <- cut(scf_19$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+
+# Rename race categories
+
+scf_19$RACE[scf_19$RACE == 1] <- "White, non-Hispanic"
+scf_19$RACE[scf_19$RACE == 2] <- "Black, non-Hispanic"
+scf_19$RACE[scf_19$RACE == 3] <- "Hispanic"
+scf_19$RACE[scf_19$RACE == 5] <- "Other"
+
+
+# Create income quintiles 
+
+inc_quintile_breaks_19 <- c(weighted_networth_quantiles(scf_19$INCOME, 
+                                                  scf_19$WGT, 1/5))
+inc_quintile_breaks_19[1] <- inc_quintile_breaks_19[1] - 1
+scf_19$INCOME_quintiles <- cut(scf_19$INCOME,
+                            c(inc_quintile_breaks_19),
+                            labels = c("0-19.9", "20-39.9",
+                                   "40-59.9", "60-79.9", 
+                                   "80-100"))
+
+
+# SCF net worth quintiles 
+
+scf_19$nw_scf_breaks <- cut(scf_19$NETWORTH,
+    c(-955502, 12410, 121760, 404100, 1218737, 1967199000),
+    labels = c("Less than 25", "25-49.9",
+                "50-74.9", "75-89.9", 
+                "90-100"), na.rm = TRUE)
+
+```
+
+
+## Creating "other" debt variable
+
+For simplicity, I combine "other" SCF debt types into one "other" debt variable.
+
+```{r assets+debts}
+
+# Debt
+
+otherdebt <- scf_19 %>%
+  select(OTHLOC, OTH_INST, ODEBT)
+scf_19$OTHDBT <- rowSums(otherdebt)
+
+```
+
+
+## Share of households with negative net worth in 1989, 2007, and 2019
+
+I calculate the proportion of households in the SCF with negative net worth. 
+```{r share net debtors of population}
+
+# 1989 (below process repeated for each year)
+
+# New binary variable that distinguishes net debt HHs from all HHs
+scf_89 <- mutate(scf_89, 
+                 netdebt_status = ifelse(scf_89$NETWORTH < 0, 1, 0))
+
+# Taking weighted share of net debt households and all else
+
+wpct(scf_89$netdebt_status, scf_89$WGT)
+
+
+# 1992
+
+scf_92 <- mutate(scf_92, 
+                 netdebt_status = ifelse(scf_92$NETWORTH < 0, 1, 0))
+
+wpct(scf_92$netdebt_status, scf_92$WGT)
+
+
+# 1995
+
+scf_95 <- mutate(scf_95, 
+                 netdebt_status = ifelse(scf_95$NETWORTH < 0, 1, 0))
+
+wpct(scf_95$netdebt_status, scf_95$WGT)
+
+
+# 1998
+
+scf_98 <- mutate(scf_98, 
+                 netdebt_status = ifelse(scf_98$NETWORTH < 0, 1, 0))
+
+wpct(scf_98$netdebt_status, scf_98$WGT)
+
+
+# 2001
+
+scf_01 <- mutate(scf_01, 
+                 netdebt_status = ifelse(scf_01$NETWORTH < 0, 1, 0))
+
+wpct(scf_01$netdebt_status, scf_01$WGT)
+
+
+# 2004
+
+scf_04 <- mutate(scf_04, 
+                 netdebt_status = ifelse(scf_04$NETWORTH < 0, 1, 0))
+
+wpct(scf_04$netdebt_status, scf_04$WGT)
+
+
+# 2007
+
+scf_07 <- mutate(scf_07, 
+                 netdebt_status = ifelse(scf_07$NETWORTH < 0, 1, 0))
+
+wpct(scf_07$netdebt_status, scf_07$WGT)
+
+
+# 2010 
+
+scf_10 <- mutate(scf_10, 
+                 netdebt_status = ifelse(scf_10$NETWORTH < 0, 1, 0))
+
+wpct(scf_10$netdebt_status, scf_10$WGT)
+
+
+# 2013 
+
+scf_13 <- mutate(scf_13, 
+                 netdebt_status = ifelse(scf_13$NETWORTH < 0, 1, 0))
+
+wpct(scf_13$netdebt_status, scf_13$WGT)
+
+
+# 2016
+
+scf_16 <- mutate(scf_16, 
+                 netdebt_status = ifelse(scf_16$NETWORTH < 0, 1, 0))
+
+wpct(scf_16$netdebt_status, scf_16$WGT)
+
+
+# 2019
+
+scf_19 <- mutate(scf_19, 
+                 netdebt_status = ifelse(scf_19$NETWORTH < 0, 1, 0))
+
+wpct(scf_19$netdebt_status, scf_19$WGT)
+
+```
+
+
+```{r Rise of student debt (experimental)}
+
+
+df_19 <- list(scf_89 = scf_89, scf_92 = scf_92, 
+              scf_95 = scf_95, scf_98 = scf_98)
+
+df_20 <- list(scf_01 = scf_01, scf_04 = scf_04, 
+              scf_07 = scf_07, scf_10 = scf_10, 
+              scf_13 = scf_13, scf_16 = scf_16, 
+              scf_19 = scf_19)
+
+
+# print(df_20[1][[1]])
+# 
+# df_20[1][[1]]$YEAR
+# 
+# for (i in df_20) {
+#   i$YEAR <- 1
+# }
+# 
+# for (i in names(df_20)) {
+#   print(paste("20", substring(i, 5, 6), sep = ""))
+# }
+```
+
+```{r Rise of student debt}
+
+
+neg_nw_89 <- filter(scf_89, scf_89$NETWORTH < 0)
+neg_nw_92 <- filter(scf_92, scf_92$NETWORTH < 0)
+neg_nw_95 <- filter(scf_95, scf_95$NETWORTH < 0)
+neg_nw_98 <- filter(scf_98, scf_98$NETWORTH < 0)
+neg_nw_01 <- filter(scf_01, scf_01$NETWORTH < 0)
+neg_nw_04 <- filter(scf_04, scf_04$NETWORTH < 0)
+neg_nw_07 <- filter(scf_07, scf_07$NETWORTH < 0)
+neg_nw_10 <- filter(scf_10, scf_10$NETWORTH < 0)
+neg_nw_13 <- filter(scf_13, scf_13$NETWORTH < 0)
+neg_nw_16 <- filter(scf_16, scf_16$NETWORTH < 0)
+neg_nw_19 <- filter(scf_19, scf_19$NETWORTH < 0)
+
+
+```
+
+
+
+
+```{r Black borrowers}
+
+
+with_edu_19 <- filter(neg_nw_19, neg_nw_19$EDN_INST > 0)
+wpct(with_edu_19$RACE, with_edu_19$WGT)
+
+with_edu_16 <- filter(neg_nw_16, neg_nw_16$EDN_INST > 0)
+wpct(with_edu_16$RACE, with_edu_16$WGT)
+
+with_edu_13 <- filter(neg_nw_13, neg_nw_13$EDN_INST > 0)
+wpct(with_edu_13$RACE, with_edu_13$WGT)
+
+with_edu_10 <- filter(neg_nw_10, neg_nw_10$EDN_INST > 0)
+wpct(with_edu_10$RACE, with_edu_10$WGT)
+
+with_edu_07 <- filter(neg_nw_07, neg_nw_07$EDN_INST > 0)
+wpct(with_edu_07$RACE, with_edu_07$WGT)
+
+with_edu_04 <- filter(neg_nw_04, neg_nw_04$EDN_INST > 0)
+wpct(with_edu_04$RACE, with_edu_04$WGT)
+
+with_edu_01 <- filter(neg_nw_01, neg_nw_01$EDN_INST > 0)
+wpct(with_edu_01$RACE, with_edu_01$WGT)
+
+with_edu_98 <- filter(neg_nw_98, neg_nw_98$EDN_INST > 0)
+wpct(with_edu_98$RACE, with_edu_98$WGT)
+
+```
+
+
+```{r credit card balances}
+
+with_ccbal_19 <- filter(neg_nw_19, neg_nw_19$CCBAL > 0)
+wpct(with_ccbal_19$RACE, with_ccbal_19$WGT)
+
+with_ccbal_16 <- filter(neg_nw_16, neg_nw_16$CCBAL > 0)
+wpct(with_ccbal_16$RACE, with_ccbal_16$WGT)
+
+with_ccbal_13 <- filter(neg_nw_13, neg_nw_13$CCBAL > 0)
+wpct(with_ccbal_13$RACE, with_ccbal_13$WGT)
+
+with_ccbal_10 <- filter(neg_nw_10, neg_nw_10$CCBAL > 0)
+wpct(with_ccbal_10$RACE, with_ccbal_10$WGT)
+
+with_ccbal_07 <- filter(neg_nw_07, neg_nw_07$CCBAL > 0)
+wpct(with_ccbal_07$RACE, with_ccbal_07$WGT)
+
+wpct(neg_nw_07$CCBAL > 0, neg_nw_07$WGT)
+wpct(neg_nw_10$CCBAL > 0, neg_nw_10$WGT)
+wpct(neg_nw_13$CCBAL > 0, neg_nw_13$WGT)
+wpct(neg_nw_16$CCBAL > 0, neg_nw_16$WGT)
+wpct(neg_nw_19$CCBAL > 0, neg_nw_19$WGT)
+
+
+ccbal_07_hold_race <- neg_nw_07 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(CCBAL > 0, WGT)[1],
+            count = n())
+ccbal_10_hold_race <- neg_nw_10 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(CCBAL > 0, WGT)[1],
+            count = n())
+ccbal_13_hold_race <- neg_nw_13 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(CCBAL > 0, WGT)[1],
+            count = n())
+ccbal_16_hold_race <- neg_nw_16 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(CCBAL > 0, WGT)[1],
+            count = n())
+ccbal_19_hold_race <- neg_nw_19 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(CCBAL > 0, WGT)[1],
+            count = n())
+
+ccbal_07_med_race <- with_ccbal_07 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(CCBAL, WGT),
+            count = n())
+ccbal_10_med_race <- with_ccbal_10 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(CCBAL, WGT),
+            count = n())
+ccbal_13_med_race <- with_ccbal_13 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(CCBAL, WGT),
+            count = n())
+ccbal_16_med_race <- with_ccbal_16 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(CCBAL, WGT),
+            count = n())
+ccbal_19_med_race <- with_ccbal_19 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(CCBAL, WGT),
+            count = n())
+
+weighted.median(neg_nw_19$CCBAL, neg_nw_19$WGT)
+weighted.median(neg_nw_16$CCBAL, neg_nw_16$WGT)
+weighted.median(neg_nw_13$CCBAL, neg_nw_13$WGT)
+
+weighted.median(with_ccbal_19$CCBAL, with_ccbal_19$WGT)
+with_ccbal_all_19 <- filter(scf_19, scf_19$CCBAL > 0)
+
+wpct(scf_19$CCBAL > 0, scf_19$WGT)
+wpct(scf_16$CCBAL > 0, scf_16$WGT)
+wpct(scf_13$CCBAL > 0, scf_13$WGT)
+
+
+wpct(neg_nw_19$CCBAL > 0, scf_19$WGT)
+wpct(neg_nw_16$CCBAL > 0, scf_19$WGT)
+
+weighted.median(with_ccbal_all_19$CCBAL, with_ccbal_all_19$WGT)
+
+
+
+```
+
+
+```{r auto loan race}
+
+with_auto_19 <- filter(neg_nw_19, neg_nw_19$VEH_INST > 0)
+wpct(with_auto_19$RACE, with_auto_19$WGT)
+
+with_auto_16 <- filter(neg_nw_16, neg_nw_16$VEH_INST > 0)
+wpct(with_auto_16$RACE, with_auto_16$WGT)
+
+with_auto_13 <- filter(neg_nw_13, neg_nw_13$VEH_INST > 0)
+wpct(with_auto_13$RACE, with_auto_13$WGT)
+
+with_auto_10 <- filter(neg_nw_10, neg_nw_10$VEH_INST > 0)
+wpct(with_auto_10$RACE, with_auto_10$WGT)
+
+
+wpct(neg_nw_07$VEH_INST > 0, neg_nw_07$WGT)
+wpct(neg_nw_10$VEH_INST > 0, neg_nw_10$WGT)
+wpct(neg_nw_13$VEH_INST > 0, neg_nw_13$WGT)
+wpct(neg_nw_16$VEH_INST > 0, neg_nw_16$WGT)
+wpct(neg_nw_19$VEH_INST > 0, neg_nw_19$WGT)
+
+
+
+auto_07_hold_race <- neg_nw_07 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(VEH_INST > 0, WGT)[1],
+            count = n())
+auto_10_hold_race <- neg_nw_10 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(VEH_INST > 0, WGT)[1],
+            count = n())
+auto_13_hold_race <- neg_nw_13 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(VEH_INST > 0, WGT)[1],
+            count = n())
+auto_16_hold_race <- neg_nw_16 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(VEH_INST > 0, WGT)[1],
+            count = n())
+auto_19_hold_race <- neg_nw_19 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(VEH_INST > 0, WGT)[1],
+            count = n())
+
+auto_07_med_race <- with_auto_07 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(VEH_INST, WGT),
+            count = n())
+auto_10_med_race <- with_auto_10 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(VEH_INST, WGT),
+            count = n())
+auto_13_med_race <- with_auto_13 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(VEH_INST, WGT),
+            count = n())
+auto_16_med_race <- with_auto_16 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(VEH_INST, WGT),
+            count = n())
+auto_19_med_race <- with_auto_19 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(VEH_INST, WGT),
+            count = n())
+
+
+```
+
+
+```{r other debt}
+
+with_odebt_19 <- filter(neg_nw_19, neg_nw_19$ODEBT > 0)
+wpct(with_odebt_19$RACE, with_odebt_19$WGT)
+
+with_odebt_16 <- filter(neg_nw_16, neg_nw_16$ODEBT > 0)
+wpct(with_odebt_16$RACE, with_odebt_16$WGT)
+
+with_odebt_13 <- filter(neg_nw_13, neg_nw_13$ODEBT > 0)
+wpct(with_odebt_13$RACE, with_odebt_13$WGT)
+
+with_odebt_10 <- filter(neg_nw_10, neg_nw_10$ODEBT > 0)
+wpct(with_odebt_10$RACE, with_odebt_10$WGT)
+
+with_odebt_07 <- filter(neg_nw_07, neg_nw_07$ODEBT > 0)
+wpct(with_odebt_07$RACE, with_odebt_07$WGT)
+
+
+wpct(neg_nw_07$OTHDBT > 0, neg_nw_07$WGT)
+wpct(neg_nw_10$OTHDBT > 0, neg_nw_10$WGT)
+wpct(neg_nw_13$OTHDBT > 0, neg_nw_13$WGT)
+wpct(neg_nw_16$OTHDBT > 0, neg_nw_16$WGT)
+wpct(neg_nw_19$OTHDBT > 0, neg_nw_19$WGT)
+
+```
+
+
+```{r age of Black HHs}
+
+neg_nw_07$age_group <- cut(neg_nw_07$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+neg_nw_07_black <- filter(neg_nw_07, neg_nw_07$RACE == 2)
+wpct(neg_nw_07_black$age_group, neg_nw_07_black$WGT)
+
+
+neg_nw_10$age_group <- cut(neg_nw_10$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+neg_nw_10_black <- filter(neg_nw_10, neg_nw_10$RACE == 2)
+wpct(neg_nw_10_black$age_group, neg_nw_10_black$WGT)
+
+
+neg_nw_13$age_group <- cut(neg_nw_13$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+neg_nw_13_black <- filter(neg_nw_13, neg_nw_13$RACE == 2)
+wpct(neg_nw_13_black$age_group, neg_nw_13_black$WGT)
+
+
+neg_nw_16$age_group <- cut(neg_nw_16$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+neg_nw_16_black <- filter(neg_nw_16, neg_nw_16$RACE == 2)
+wpct(neg_nw_16_black$age_group, neg_nw_16_black$WGT)
+
+
+neg_nw_19_black <- filter(neg_nw_19, 
+                          neg_nw_19$RACE == "Black, non-Hispanic")
+wpct(neg_nw_19_black$age_group, neg_nw_19_black$WGT)
+
+```
+
+
+```{r net debt by race}
+
+wpct(neg_nw_07$RACE, neg_nw_07$WGT)
+wpct(neg_nw_10$RACE, neg_nw_10$WGT)
+wpct(neg_nw_13$RACE, neg_nw_13$WGT)
+wpct(neg_nw_16$RACE, neg_nw_16$WGT)
+wpct(neg_nw_19$RACE, neg_nw_19$WGT)
+
+
+```
+
+
+```{r debt balances over time}
+
+debts_med_19 <- data.frame(RESDBT = weighted.median(neg_nw_19$RESDBT,
+                                                    neg_nw_19$WGT)/1000,
+                  MRTHEL = weighted.median(neg_nw_19$MRTHEL, 
+                                               neg_nw_19$WGT)/1000,
+                   CCBAL = weighted.median(neg_nw_19$CCBAL, 
+                                         neg_nw_19$WGT)/1000,
+                   EDN_INST = weighted.median(neg_nw_19$EDN_INST,
+                                            neg_nw_19$WGT)/1000,
+                   VEH_INST = weighted.median(neg_nw_19$VEH_INST, 
+                                           neg_nw_19$WGT)/1000,
+                   OTHDBT = weighted.median(neg_nw_19$OTHDBT,
+                                            neg_nw_19$WGT)/1000)
+
+
+debts_med_16 <- data.frame(RESDBT = weighted.median(neg_nw_16$RESDBT,
+                                                    neg_nw_16$WGT)/1000,
+                  MRTHEL = weighted.median(neg_nw_16$MRTHEL, 
+                                               neg_nw_16$WGT)/1000,
+                   CCBAL = weighted.median(neg_nw_16$CCBAL, 
+                                         neg_nw_16$WGT)/1000,
+                   EDN_INST = weighted.median(neg_nw_16$EDN_INST,
+                                            neg_nw_16$WGT)/1000,
+                   VEH_INST = weighted.median(neg_nw_16$VEH_INST, 
+                                           neg_nw_16$WGT)/1000,
+                   OTHDBT = weighted.median(neg_nw_16$OTHDBT,
+                                            neg_nw_16$WGT)/1000)
+
+
+debts_med_13 <- data.frame(RESDBT = weighted.median(neg_nw_13$RESDBT,
+                                                    neg_nw_13$WGT)/1000,
+                  MRTHEL = weighted.median(neg_nw_13$MRTHEL, 
+                                               neg_nw_13$WGT)/1000,
+                   CCBAL = weighted.median(neg_nw_13$CCBAL, 
+                                         neg_nw_13$WGT)/1000,
+                   EDN_INST = weighted.median(neg_nw_13$EDN_INST,
+                                            neg_nw_13$WGT)/1000,
+                   VEH_INST = weighted.median(neg_nw_13$VEH_INST, 
+                                           neg_nw_13$WGT)/1000,
+                   OTHDBT = weighted.median(neg_nw_13$OTHDBT,
+                                            neg_nw_13$WGT)/1000)
+
+
+debts_med_10 <- data.frame(RESDBT = weighted.median(neg_nw_10$RESDBT,
+                                                    neg_nw_10$WGT)/1000,
+                  MRTHEL = weighted.median(neg_nw_10$MRTHEL, 
+                                               neg_nw_10$WGT)/1000,
+                   CCBAL = weighted.median(neg_nw_10$CCBAL, 
+                                         neg_nw_10$WGT)/1000,
+                   EDN_INST = weighted.median(neg_nw_10$EDN_INST,
+                                            neg_nw_10$WGT)/1000,
+                   VEH_INST = weighted.median(neg_nw_10$VEH_INST, 
+                                           neg_nw_10$WGT)/1000,
+                   OTHDBT = weighted.median(neg_nw_10$OTHDBT,
+                                            neg_nw_10$WGT)/1000)
+
+
+
+debts_med_07 <- data.frame(RESDBT = weighted.median(neg_nw_07$RESDBT,
+                                                    neg_nw_07$WGT)/1000,
+                  MRTHEL = weighted.median(neg_nw_07$MRTHEL, 
+                                               neg_nw_07$WGT)/1000,
+                   CCBAL = weighted.median(neg_nw_07$CCBAL, 
+                                         neg_nw_07$WGT)/1000,
+                   EDN_INST = weighted.median(neg_nw_07$EDN_INST,
+                                            neg_nw_07$WGT)/1000,
+                   VEH_INST = weighted.median(neg_nw_07$VEH_INST, 
+                                           neg_nw_07$WGT)/1000,
+                   OTHDBT = weighted.median(neg_nw_07$OTHDBT,
+                                            neg_nw_07$WGT)/1000)
+```
+
+
+```{r assets over time}
+
+# 2019
+
+assets_holding_19 <- data.frame(LIQ_hold = wpct(neg_nw_19$LIQ > 0, 
+                                           neg_nw_19$WGT)[1],
+                                LIQ_med = weighted.median(neg_nw_19$LIQ,
+                                                          neg_nw_19$WGT),
+                                SEC_hold = wpct(neg_nw_19$SECURITIES > 0, 
+                                           neg_nw_19$WGT)[1],
+                                SEC_med = weighted.median(neg_nw_19$SECURITIES,
+                                                          neg_nw_19$WGT),
+                                RETQLIQ_hold = wpct(neg_nw_19$RETQLIQ > 0, 
+                                           neg_nw_19$WGT)[1],
+                                RETQLIQ_med = weighted.median(neg_nw_19$RETQLIQ,
+                                                          neg_nw_19$WGT),
+                                OFIN_hold = wpct(neg_nw_19$OTHFIN_COMPLETE > 0, 
+                                           neg_nw_19$WGT)[1],
+                                OFIN_med = weighted.median(neg_nw_19$OTHFIN_COMPLETE,
+                                                          neg_nw_19$WGT),
+                                VEHIC_hold = wpct(neg_nw_19$VEHIC > 0, 
+                                           neg_nw_19$WGT)[1],
+                                VEHIC_med = weighted.median(neg_nw_19$VEHIC,
+                                                          neg_nw_19$WGT),
+                                HOUSES_hold = wpct(neg_nw_19$HOUSES > 0, 
+                                           neg_nw_19$WGT)[1],
+                                HOUSES_med = weighted.median(neg_nw_19$HOUSES,
+                                                          neg_nw_19$WGT),
+                                NONRES_hold = wpct(neg_nw_19$NONRES > 0, 
+                                           neg_nw_19$WGT)[1],
+                                NONRES_med = weighted.median(neg_nw_19$NONRES,
+                                                          neg_nw_19$WGT),
+                                BUS_hold = wpct(neg_nw_19$BUS > 0, 
+                                           neg_nw_19$WGT)[1],
+                                BUS_med = weighted.median(neg_nw_19$BUS,
+                                                          neg_nw_19$WGT),
+                                ONFIN_hold = wpct(neg_nw_19$OTHNFIN > 0, 
+                                           neg_nw_19$WGT)[1],
+                                ONFIN_med = weighted.median(neg_nw_19$OTHNFIN,
+                                                          neg_nw_19$WGT)
+                                
+)
+
+
+# 2016
+
+assets_holding_16 <- data.frame(LIQ_hold = wpct(neg_nw_16$LIQ > 0, 
+                                           neg_nw_16$WGT)[1],
+                                LIQ_med = weighted.median(neg_nw_16$LIQ,
+                                                          neg_nw_16$WGT),
+                                SEC_hold = wpct(neg_nw_16$SECURITIES > 0, 
+                                           neg_nw_16$WGT)[1],
+                                SEC_med = weighted.median(neg_nw_16$SECURITIES,
+                                                          neg_nw_16$WGT),
+                                RETQLIQ_hold = wpct(neg_nw_16$RETQLIQ > 0, 
+                                           neg_nw_16$WGT)[1],
+                                RETQLIQ_med = weighted.median(neg_nw_16$RETQLIQ,
+                                                          neg_nw_16$WGT),
+                                OFIN_hold = wpct(neg_nw_16$OTHFIN_COMPLETE > 0, 
+                                           neg_nw_16$WGT)[1],
+                                OFIN_med = weighted.median(neg_nw_16$OTHFIN_COMPLETE,
+                                                          neg_nw_16$WGT),
+                                VEHIC_hold = wpct(neg_nw_16$VEHIC > 0, 
+                                           neg_nw_16$WGT)[1],
+                                VEHIC_med = weighted.median(neg_nw_16$VEHIC,
+                                                          neg_nw_16$WGT),
+                                HOUSES_hold = wpct(neg_nw_16$HOUSES > 0, 
+                                           neg_nw_16$WGT)[1],
+                                HOUSES_med = weighted.median(neg_nw_16$HOUSES,
+                                                          neg_nw_16$WGT),
+                                NONRES_hold = wpct(neg_nw_16$NONRES > 0, 
+                                           neg_nw_16$WGT)[1],
+                                NONRES_med = weighted.median(neg_nw_16$NONRES,
+                                                          neg_nw_16$WGT),
+                                BUS_hold = wpct(neg_nw_16$BUS > 0, 
+                                           neg_nw_16$WGT)[1],
+                                BUS_med = weighted.median(neg_nw_16$BUS,
+                                                          neg_nw_16$WGT),
+                                ONFIN_hold = wpct(neg_nw_16$OTHNFIN > 0, 
+                                           neg_nw_16$WGT)[1],
+                                ONFIN_med = weighted.median(neg_nw_16$OTHNFIN,
+                                                          neg_nw_16$WGT)
+                                
+)
+
+
+# 2013 
+
+assets_holding_13 <- data.frame(LIQ_hold = wpct(neg_nw_13$LIQ > 0, 
+                                           neg_nw_13$WGT)[1],
+                                LIQ_med = weighted.median(neg_nw_13$LIQ,
+                                                          neg_nw_13$WGT),
+                                SEC_hold = wpct(neg_nw_13$SECURITIES > 0, 
+                                           neg_nw_13$WGT)[1],
+                                SEC_med = weighted.median(neg_nw_13$SECURITIES,
+                                                          neg_nw_13$WGT),
+                                RETQLIQ_hold = wpct(neg_nw_13$RETQLIQ > 0, 
+                                           neg_nw_13$WGT)[1],
+                                RETQLIQ_med = weighted.median(neg_nw_13$RETQLIQ,
+                                                          neg_nw_13$WGT),
+                                OFIN_hold = wpct(neg_nw_13$OTHFIN_COMPLETE > 0, 
+                                           neg_nw_13$WGT)[1],
+                                OFIN_med = weighted.median(neg_nw_13$OTHFIN_COMPLETE,
+                                                          neg_nw_13$WGT),
+                                VEHIC_hold = wpct(neg_nw_13$VEHIC > 0, 
+                                           neg_nw_13$WGT)[1],
+                                VEHIC_med = weighted.median(neg_nw_13$VEHIC,
+                                                          neg_nw_13$WGT),
+                                HOUSES_hold = wpct(neg_nw_13$HOUSES > 0, 
+                                           neg_nw_13$WGT)[1],
+                                HOUSES_med = weighted.median(neg_nw_13$HOUSES,
+                                                          neg_nw_13$WGT),
+                                NONRES_hold = wpct(neg_nw_13$NONRES > 0, 
+                                           neg_nw_13$WGT)[1],
+                                NONRES_med = weighted.median(neg_nw_13$NONRES,
+                                                          neg_nw_13$WGT),
+                                BUS_hold = wpct(neg_nw_13$BUS > 0, 
+                                           neg_nw_13$WGT)[1],
+                                BUS_med = weighted.median(neg_nw_13$BUS,
+                                                          neg_nw_13$WGT),
+                                ONFIN_hold = wpct(neg_nw_13$OTHNFIN > 0, 
+                                           neg_nw_13$WGT)[1],
+                                ONFIN_med = weighted.median(neg_nw_13$OTHNFIN,
+                                                          neg_nw_13$WGT)
+                                
+)
+
+
+# 2010
+
+assets_holding_10 <- data.frame(LIQ_hold = wpct(neg_nw_10$LIQ > 0, 
+                                           neg_nw_10$WGT)[1],
+                                LIQ_med = weighted.median(neg_nw_10$LIQ,
+                                                          neg_nw_10$WGT),
+                                SEC_hold = wpct(neg_nw_10$SECURITIES > 0, 
+                                           neg_nw_10$WGT)[1],
+                                SEC_med = weighted.median(neg_nw_10$SECURITIES,
+                                                          neg_nw_10$WGT),
+                                RETQLIQ_hold = wpct(neg_nw_10$RETQLIQ > 0, 
+                                           neg_nw_10$WGT)[1],
+                                RETQLIQ_med = weighted.median(neg_nw_10$RETQLIQ,
+                                                          neg_nw_10$WGT),
+                                OFIN_hold = wpct(neg_nw_10$OTHFIN_COMPLETE > 0, 
+                                           neg_nw_10$WGT)[1],
+                                OFIN_med = weighted.median(neg_nw_10$OTHFIN_COMPLETE,
+                                                          neg_nw_10$WGT),
+                                VEHIC_hold = wpct(neg_nw_10$VEHIC > 0, 
+                                           neg_nw_10$WGT)[1],
+                                VEHIC_med = weighted.median(neg_nw_10$VEHIC,
+                                                          neg_nw_10$WGT),
+                                HOUSES_hold = wpct(neg_nw_10$HOUSES > 0, 
+                                           neg_nw_10$WGT)[1],
+                                HOUSES_med = weighted.median(neg_nw_10$HOUSES,
+                                                          neg_nw_10$WGT),
+                                NONRES_hold = wpct(neg_nw_10$NONRES > 0, 
+                                           neg_nw_10$WGT)[1],
+                                NONRES_med = weighted.median(neg_nw_10$NONRES,
+                                                          neg_nw_10$WGT),
+                                BUS_hold = wpct(neg_nw_10$BUS > 0, 
+                                           neg_nw_10$WGT)[1],
+                                BUS_med = weighted.median(neg_nw_10$BUS,
+                                                          neg_nw_10$WGT),
+                                ONFIN_hold = wpct(neg_nw_10$OTHNFIN > 0, 
+                                           neg_nw_10$WGT)[1],
+                                ONFIN_med = weighted.median(neg_nw_10$OTHNFIN,
+                                                          neg_nw_10$WGT)
+                                
+)
+
+
+# 2007
+
+assets_holding_07 <- data.frame(LIQ_hold = wpct(neg_nw_07$LIQ > 0, 
+                                           neg_nw_07$WGT)[1],
+                                LIQ_med = weighted.median(neg_nw_07$LIQ,
+                                                          neg_nw_07$WGT),
+                                SEC_hold = wpct(neg_nw_07$SECURITIES > 0, 
+                                           neg_nw_07$WGT)[1],
+                                SEC_med = weighted.median(neg_nw_07$SECURITIES,
+                                                          neg_nw_07$WGT),
+                                RETQLIQ_hold = wpct(neg_nw_07$RETQLIQ > 0, 
+                                           neg_nw_07$WGT)[1],
+                                RETQLIQ_med = weighted.median(neg_nw_07$RETQLIQ,
+                                                          neg_nw_07$WGT),
+                                OFIN_hold = wpct(neg_nw_07$OTHFIN_COMPLETE > 0, 
+                                           neg_nw_07$WGT)[1],
+                                OFIN_med = weighted.median(neg_nw_07$OTHFIN_COMPLETE,
+                                                          neg_nw_07$WGT),
+                                VEHIC_hold = wpct(neg_nw_07$VEHIC > 0, 
+                                           neg_nw_07$WGT)[1],
+                                VEHIC_med = weighted.median(neg_nw_07$VEHIC,
+                                                          neg_nw_07$WGT),
+                                HOUSES_hold = wpct(neg_nw_07$HOUSES > 0, 
+                                           neg_nw_07$WGT)[1],
+                                HOUSES_med = weighted.median(neg_nw_07$HOUSES,
+                                                          neg_nw_07$WGT),
+                                NONRES_hold = wpct(neg_nw_07$NONRES > 0, 
+                                           neg_nw_07$WGT)[1],
+                                NONRES_med = weighted.median(neg_nw_07$NONRES,
+                                                          neg_nw_07$WGT),
+                                BUS_hold = wpct(neg_nw_07$BUS > 0, 
+                                           neg_nw_07$WGT)[1],
+                                BUS_med = weighted.median(neg_nw_07$BUS,
+                                                          neg_nw_07$WGT),
+                                ONFIN_hold = wpct(neg_nw_07$OTHNFIN > 0, 
+                                           neg_nw_07$WGT)[1],
+                                ONFIN_med = weighted.median(neg_nw_07$OTHNFIN,
+                                                          neg_nw_07$WGT)
+                                
+)
+
+
+assets_overtime <- rbind(assets_holding_07, assets_holding_10, assets_holding_13, assets_holding_16, assets_holding_19)
+
+row.names(assets_overtime) <- c("2007", "2010", "2013", "2016", "2019")
+
+```
+
+
+```{r housing after recession}
+
+wpct(neg_nw_07$MRTHEL > 0, neg_nw_07$WGT)
+wpct(neg_nw_10$MRTHEL > 0, neg_nw_10$WGT)
+wpct(neg_nw_13$MRTHEL > 0, neg_nw_13$WGT)
+wpct(neg_nw_16$MRTHEL > 0, neg_nw_16$WGT)
+wpct(neg_nw_19$MRTHEL > 0, neg_nw_19$WGT)
+
+weighted.median(with_mrthel_07$MRTHEL, with_mrthel_07$WGT)
+
+with_mrthel_10 <- filter(neg_nw_10, neg_nw_10$MRTHEL > 0)
+weighted.median(with_mrthel_10$MRTHEL, with_mrthel_10$WGT)
+
+with_houses_07 <- filter(neg_nw_07, neg_nw_07$HOUSES > 0)
+weighted.median(with_houses_07$NETWORTH, with_houses_07$WGT)
+weighted.median(with_houses_07$INCOME, with_houses_07$WGT)
+weighted.median(with_houses_07$MRTHEL, with_houses_07$WGT)
+weighted.median(with_houses_07$HOUSES, with_houses_07$WGT)
+weighted.median(with_houses_07$ASSET, with_houses_07$WGT)
+
+with_houses_10 <- filter(neg_nw_10, neg_nw_10$HOUSES > 0)
+weighted.median(with_houses_10$NETWORTH, with_houses_10$WGT)
+weighted.median(with_houses_10$INCOME, with_houses_10$WGT)
+weighted.median(with_houses_10$MRTHEL, with_houses_10$WGT)
+weighted.median(with_houses_10$HOUSES, with_houses_10$WGT)
+
+with_houses_13 <- filter(neg_nw_13, neg_nw_13$HOUSES > 0)
+weighted.median(with_houses_10$NETWORTH, with_houses_10$WGT)
+weighted.median(with_houses_10$INCOME, with_houses_10$WGT)
+weighted.median(with_houses_13$MRTHEL, with_houses_13$WGT)
+weighted.median(with_houses_13$HOUSES, with_houses_13$WGT)
+
+with_houses_16 <- filter(neg_nw_16, neg_nw_16$HOUSES > 0)
+weighted.median(with_houses_16$HOUSES, with_houses_16$WGT)
+weighted.median(with_houses_16$MRTHEL, with_houses_16$WGT)
+
+weighted.median(neg_nw_07$INCOME, neg_nw_07$WGT)
+weighted.median(neg_nw_07$ASSET, neg_nw_07$WGT)
+weighted.median(neg_nw_10$INCOME, neg_nw_10$WGT)
+weighted.median(neg_nw_10$ASSET, neg_nw_10$WGT)
+
+
+# age of homeowners 
+
+wpct(with_houses_07$age_group, with_houses_07$WGT)
+wpct(with_houses_10$age_group, with_houses_10$WGT)
+wpct(with_houses_13$age_group, with_houses_13$WGT)
+
+
+# with mortgage debt
+
+wpct(with_mort_07$HOUSECL, with_mort_07$WGT)
+
+with_mort_10 <- filter(neg_nw_10, neg_nw_10$MRTHEL > 0)
+wpct(with_mort_10$HOUSECL, with_mort_10$WGT)
+
+
+```
+
+
+
+```{r proportion in net debt by race and age}
+
+# 2007
+
+scf_07$age_group <- cut(scf_07$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+prop_nd_race_07 <- scf_07 %>%
+  group_by(age_group, RACE) %>%
+  summarise(prop = wpct(NETWORTH < 0, WGT)[1],
+            prop_edu_all = wpct(EDN_INST > 0, WGT)[1],
+            prop_edu = wpct(NETWORTH < 0 & EDN_INST > 0, WGT)[1],
+            prop_veh = wpct(NETWORTH < 0 & VEH_INST > 0, WGT)[1],
+            prop_ccbal = wpct(NETWORTH < 0 & CCBAL > 0, WGT)[1],
+            prop_mort = wpct(NETWORTH < 0 & MRTHEL > 0, WGT)[1],
+            prop_rdebt = wpct(NETWORTH < 0 & RESDBT > 0, WGT)[1],
+            count = n())
+
+
+
+# 2010
+
+scf_10$age_group <- cut(scf_10$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+prop_nd_race_10 <- scf_10 %>%
+  group_by(age_group, RACE) %>%
+  summarise(prop = wpct(NETWORTH < 0, WGT)[1],
+            prop_edu_all = wpct(EDN_INST > 0, WGT)[1],
+            prop_edu = wpct(NETWORTH < 0 & EDN_INST > 0, WGT)[1],
+            prop_veh = wpct(NETWORTH < 0 & VEH_INST > 0, WGT)[1],
+            prop_ccbal = wpct(NETWORTH < 0 & CCBAL > 0, WGT)[1],
+            prop_mort = wpct(NETWORTH < 0 & MRTHEL > 0, WGT)[1],
+            prop_rdebt = wpct(NETWORTH < 0 & RESDBT > 0, WGT)[1],
+            count = n())
+
+
+# 2013
+
+scf_13$age_group <- cut(scf_13$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+prop_nd_race_13 <- scf_13 %>%
+  group_by(age_group, RACE) %>%
+  summarise(prop = wpct(NETWORTH < 0, WGT)[1],
+            prop_edu_all = wpct(EDN_INST > 0, WGT)[1],
+            prop_edu = wpct(NETWORTH < 0 & EDN_INST > 0, WGT)[1],
+            prop_veh = wpct(NETWORTH < 0 & VEH_INST > 0, WGT)[1],
+            prop_ccbal = wpct(NETWORTH < 0 & CCBAL > 0, WGT)[1],
+            prop_mort = wpct(NETWORTH < 0 & MRTHEL > 0, WGT)[1],
+            prop_rdebt = wpct(NETWORTH < 0 & RESDBT > 0, WGT)[1],
+            count = n())
+
+
+# 2016
+
+scf_16$age_group <- cut(scf_16$AGE,
+                            c(17, 34, 54, 96),
+                            labels = c("Under 35", "35-54",
+                                   "Over 55"))
+
+prop_nd_race_16 <- scf_16 %>%
+  group_by(age_group, RACE) %>%
+  summarise(prop = wpct(NETWORTH < 0, WGT)[1],
+            prop_edu_all = wpct(EDN_INST > 0, WGT)[1],
+            prop_edu = wpct(NETWORTH < 0 & EDN_INST > 0, WGT)[1],
+            prop_veh = wpct(NETWORTH < 0 & VEH_INST > 0, WGT)[1],
+            prop_ccbal = wpct(NETWORTH < 0 & CCBAL > 0, WGT)[1],
+            prop_mort = wpct(NETWORTH < 0 & MRTHEL > 0, WGT)[1],
+            prop_rdebt = wpct(NETWORTH < 0 & RESDBT > 0, WGT)[1],
+            count = n())
+
+
+# 2019
+
+prop_nd_race_19 <- scf_19 %>%
+  group_by(age_group, RACE) %>%
+  summarise(prop = wpct(NETWORTH < 0, WGT)[1],
+            prop_edu_all = wpct(EDN_INST > 0, WGT)[1],
+            prop_edu = wpct(NETWORTH < 0 & EDN_INST > 0, WGT)[1],
+            prop_veh = wpct(NETWORTH < 0 & VEH_INST > 0, WGT)[1],
+            prop_ccbal = wpct(NETWORTH < 0 & CCBAL > 0, WGT)[1],
+            prop_mort = wpct(NETWORTH < 0 & MRTHEL > 0, WGT)[1],
+            prop_rdebt = wpct(NETWORTH < 0 & RESDBT > 0, WGT)[1],
+            count = n())
+
+
+
+```
+
+
+
+```{r gender}
+
+wpct(neg_nw_07$HHSEX, neg_nw_07$WGT)
+wpct(neg_nw_10$HHSEX, neg_nw_10$WGT)
+wpct(neg_nw_13$HHSEX, neg_nw_13$WGT)
+wpct(neg_nw_16$HHSEX, neg_nw_16$WGT)
+wpct(neg_nw_19$HHSEX, neg_nw_19$WGT)
+
+
+neg_nw_women_19 <- filter(neg_nw_19, neg_nw_19$HHSEX == 2)
+
+neg_nw_19_black <- filter(neg_nw_19, neg_nw_19$RACE == "Black, non-Hispanic")
+
+wpct(neg_nw_19_black$HHSEX, neg_nw_19_black$WGT)
+
+wpct(neg_nw_19$RACE, neg_nw_19$WGT)
+wpct(neg_nw_16$RACE, neg_nw_16$WGT)
+wpct(neg_nw_13$RACE, neg_nw_13$WGT)
+wpct(neg_nw_10$RACE, neg_nw_10$WGT)
+wpct(neg_nw_07$RACE, neg_nw_07$WGT)
+```
+
+
+
+```{r race and gender}
+
+neg_nw_07_gender_race <- neg_nw_07 %>%
+  group_by(RACE) %>%
+  summarise(wpct(HHSEX, WGT))
+
+neg_nw_10_gender_race <- neg_nw_10 %>%
+  group_by(RACE) %>%
+  summarise(wpct(HHSEX, WGT))
+
+neg_nw_13_gender_race <- neg_nw_13 %>%
+  group_by(RACE) %>%
+  summarise(wpct(HHSEX, WGT))
+
+neg_nw_16_gender_race <- neg_nw_16 %>%
+  group_by(RACE) %>%
+  summarise(wpct(HHSEX, WGT))
+
+neg_nw_19_gender_race <- neg_nw_19 %>%
+  group_by(RACE) %>%
+  summarise(wpct(HHSEX, WGT))
+```
+
+
+```{r student debt by race}
+
+debt_race_07 <- neg_nw_07 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(wpct(EDN_INST > 0, WGT)[1],
+            weighted.median(EDN_INST, WGT),
+            weighted.median(INCOME, WGT),
+            count = n())
+
+debt_race_10 <- neg_nw_10 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(wpct(EDN_INST > 0, WGT)[1],
+            weighted.median(EDN_INST, WGT),
+            weighted.median(INCOME, WGT),
+            count = n())
+
+debt_race_13 <- neg_nw_13 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(wpct(EDN_INST > 0, WGT)[1],
+            weighted.median(EDN_INST, WGT),
+            weighted.median(INCOME, WGT),
+            count = n())
+
+debt_race_16 <- neg_nw_16 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(wpct(EDN_INST > 0, WGT)[1],
+            weighted.median(EDN_INST, WGT),
+            weighted.median(INCOME, WGT),
+            count = n())
+
+debt_race_19 <- neg_nw_19 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(wpct(EDN_INST > 0, WGT)[1],
+            weighted.median(EDN_INST, WGT),
+            weighted.median(INCOME, WGT),
+            count = n())
+```
+
+```{r Black women}
+
+black_women_07 <- filter(neg_nw_07, neg_nw_07$HHSEX == 2)
+wpct(black_women_07$EDN_INST > 0, black_women_07$WGT)
+wpct(black_women_07$FAMSTRUCT, black_women_07$WGT)
+wpct(black_women_07$EDCL, black_women_07$WGT)
+wpct(black_women_07$age_group, black_women_07$WGT)
+
+race_income_07 <- neg_nw_07 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(med = weighted.median(INCOME, WGT),
+            prop_edu = wpct(EDCL >= 3, WGT)[1],
+            prop_edu4 = wpct(EDCL == 4, WGT)[1],
+            debt_prop = wpct(EDN_INST > 0, WGT)[1],
+            debt_balance = weighted.median(EDN_INST, WGT),
+            prop_single_nokids = wpct(FAMSTRUCT == 1, WGT)[1],
+            count = n())
+
+
+race_income_10 <- neg_nw_10 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(med = weighted.median(INCOME, WGT),
+            prop_edu = wpct(EDCL >= 3, WGT)[1],
+            prop_edu4 = wpct(EDCL == 4, WGT)[1],
+            debt_prop = wpct(EDN_INST > 0, WGT)[1],
+            debt_balance = weighted.median(EDN_INST, WGT),
+            prop_single_nokids = wpct(FAMSTRUCT == 1, WGT)[1],
+            count = n())
+
+
+race_income_13 <- neg_nw_13 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(med_income = weighted.median(INCOME, WGT),
+            med_debt = weighted.median(DEBT, WGT),
+            med_assets = weighted.median(ASSET, WGT),
+            prop_edu3 = wpct(EDCL == 3, WGT)[1], 
+            prop_edu4 = wpct(EDCL == 4, WGT)[1],
+            debt_prop = wpct(EDN_INST > 0, WGT)[1],
+            debt_balance = weighted.median(EDN_INST, WGT),
+            prop_single_nokids = wpct(FAMSTRUCT == 1, WGT)[1],
+            med_age = weighted.median(AGE, WGT),
+            count = n())
+
+race_income_16 <- neg_nw_16 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(med_income = weighted.median(INCOME, WGT),
+            med_debt = weighted.median(DEBT, WGT),
+            med_assets = weighted.median(ASSET, WGT),
+            prop_edu3 = wpct(EDCL == 3, WGT)[1], 
+            prop_edu4 = wpct(EDCL == 4, WGT)[1],
+            debt_prop = wpct(EDN_INST > 0, WGT)[1],
+            debt_balance = weighted.median(EDN_INST, WGT),
+            prop_single_nokids = wpct(FAMSTRUCT == 1, WGT)[1],
+            med_age = weighted.median(AGE, WGT),
+            count = n())
+
+
+race_income_19 <- neg_nw_19 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(med_income = weighted.median(INCOME, WGT),
+            med_debt = weighted.median(DEBT, WGT),
+            med_assets = weighted.median(ASSET, WGT),
+            prop_edu3 = wpct(EDCL == 3, WGT)[1], 
+            prop_edu4 = wpct(EDCL == 4, WGT)[1],
+            debt_prop = wpct(EDN_INST > 0, WGT)[1],
+            debt_balance = weighted.median(EDN_INST, WGT),
+            prop_single_nokids = wpct(FAMSTRUCT == 1, WGT)[1],
+            med_age = weighted.median(AGE, WGT),
+            count = n())
+
+
+black_women_13 <- filter(neg_nw_13, neg_nw_13$HHSEX == 2)
+wpct(black_women_13$EDN_INST > 0, black_women_13$WGT)
+
+black_women_16 <- filter(neg_nw_16, neg_nw_16$HHSEX == 2)
+wpct(black_women_16$EDN_INST > 0, black_women_16$WGT)
+
+black_women_19 <- filter(neg_nw_19, neg_nw_19$HHSEX == 2)
+wpct(black_women_19$EDN_INST > 0, black_women_19$WGT)
+wpct(black_women_19$FAMSTRUCT, black_women_19$WGT)
+wpct(black_women_19$EDCL, black_women_19$WGT)
+wpct(black_women_19$age_group, black_women_19$WGT)
+
+
+
+```
+
+
+```{r single motherhood by race}
+
+single_parent_race_07 <- neg_nw_07 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(single_kids = wpct(FAMSTRUCT == 1, WGT)[1])
+
+single_parent_race_10 <- neg_nw_10 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(single_kids = wpct(FAMSTRUCT == 1, WGT)[1])
+
+single_parent_race_13 <- neg_nw_13 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(single_kids = wpct(FAMSTRUCT == 1, WGT)[1])
+
+single_parent_race_16 <- neg_nw_16 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(single_kids = wpct(FAMSTRUCT == 1, WGT)[1])
+
+single_parent_race_19 <- neg_nw_19 %>%
+  group_by(RACE, HHSEX) %>%
+  summarise(single_kids = wpct(FAMSTRUCT == 1, WGT)[1])
+  
+
+```
+
+
+
+```{r age}
+
+under_35_19 <- filter(scf_19, scf_19$age_group == "Under 35")
+middle_age_19 <- filter(scf_19, scf_19$age_group == "35-54")
+over_55_19 <- filter(scf_19, scf_19$age_group == "Over 55")
+
+head(scf_19$age_group)
+
+sum(under_35_19$NETWORTH < 0)/nrow(under_35_19)
+sum(middle_age_19$NETWORTH < 0)/nrow(middle_age_19)
+sum(over_55_19$NETWORTH < 0)/nrow(over_55_19)
+```
+
+
+```{r student debt deep dive}
+
+wpct(scf_19$EDCL, scf_19$WGT)
+wpct(neg_nw_19$EDCL, neg_nw_19$WGT)
+
+edu_debt_19 <- filter(neg_nw_19, neg_nw_19$EDN_INST > 0)
+wpct(edu_debt_19$EDCL, edu_debt_19$WGT)
+
+edu_debt_16 <- filter(neg_nw_16, neg_nw_16$EDN_INST > 0)
+wpct(edu_debt_16$EDCL, edu_debt_16$WGT)
+
+edu_debt_13 <- filter(neg_nw_13, neg_nw_13$EDN_INST > 0)
+wpct(edu_debt_13$EDCL, edu_debt_13$WGT)
+
+edu_debt_10 <- filter(neg_nw_10, neg_nw_10$EDN_INST > 0)
+wpct(edu_debt_10$EDCL, edu_debt_10$WGT)
+
+edu_debt_07 <- filter(neg_nw_07, neg_nw_07$EDN_INST > 0)
+wpct(edu_debt_07$EDCL, edu_debt_07$WGT)
+
+
+edu_debt_lvl <- rbind(wpct(edu_debt_07$EDCL, edu_debt_07$WGT),
+                      wpct(edu_debt_10$EDCL, edu_debt_10$WGT),
+                      wpct(edu_debt_13$EDCL, edu_debt_13$WGT),
+                      wpct(edu_debt_16$EDCL, edu_debt_16$WGT),
+                      wpct(edu_debt_19$EDCL, edu_debt_19$WGT))
+
+
+edu_debt_3_19 <- filter(edu_debt_19, edu_debt_19$EDCL == 3)
+wpct(edu_debt_3_19$RACE, edu_debt_3_19$WGT)
+
+edu_debt_3_16 <- filter(edu_debt_16, edu_debt_16$EDCL == 3)
+wpct(edu_debt_3_16$RACE, edu_debt_3_16$WGT)
+
+edu_debt_3_13 <- filter(edu_debt_13, edu_debt_13$EDCL == 3)
+wpct(edu_debt_3_13$RACE, edu_debt_3_13$WGT)
+
+edu_debt_3_10 <- filter(edu_debt_10, edu_debt_10$EDCL == 3)
+wpct(edu_debt_3_10$RACE, edu_debt_3_10$WGT)
+
+edu_debt_3_07 <- filter(edu_debt_07, edu_debt_07$EDCL == 3)
+wpct(edu_debt_3_07$RACE, edu_debt_3_07$WGT)
+
+
+
+edu_debt_4_19 <- filter(edu_debt_19, edu_debt_19$EDCL == 4)
+wpct(edu_debt_4_19$RACE, edu_debt_4_19$WGT)
+
+edu_debt_4_16 <- filter(edu_debt_16, edu_debt_16$EDCL == 4)
+wpct(edu_debt_4_16$RACE, edu_debt_4_16$WGT)
+
+edu_debt_4_13 <- filter(edu_debt_13, edu_debt_13$EDCL == 4)
+wpct(edu_debt_4_13$RACE, edu_debt_4_13$WGT)
+
+edu_debt_4_10 <- filter(edu_debt_10, edu_debt_10$EDCL == 4)
+wpct(edu_debt_4_10$RACE, edu_debt_4_10$WGT)
+
+edu_debt_4_07 <- filter(edu_debt_07, edu_debt_07$EDCL == 4)
+wpct(edu_debt_4_07$RACE, edu_debt_4_07$WGT)
+
+
+wpct(edu_debt_19$RACE, edu_debt_19$WGT)
+wpct(edu_debt_16$RACE, edu_debt_16$WGT)
+wpct(edu_debt_13$RACE, edu_debt_13$WGT)
+wpct(edu_debt_10$RACE, edu_debt_10$WGT)
+wpct(edu_debt_07$RACE, edu_debt_07$WGT)
+
+
+med_race <- with_edu_debt_19 %>%
+  group_by(RACE) %>%
+  summarise(weighted.median(EDN_INST, WGT))
+
+
+neg_nw_19_black <- filter(neg_nw_19, neg_nw_19$RACE == "Black, non-Hispanic")
+neg_nw_19_black_debt <- filter(neg_nw_19_black, neg_nw_19_black$EDN_INST > 0)
+wpct(neg_nw_19_black$EDCL, neg_nw_19_black$WGT)
+wpct(neg_nw_19_black_debt$EDCL, neg_nw_19_black_debt$WGT)
+
+neg_nw_19_white <- filter(neg_nw_19, neg_nw_19$RACE == "White, non-Hispanic")
+wpct(neg_nw_19_white$EDCL, neg_nw_19_white$WGT)
+
+
+
+
+
+```
+
+
+```{r student debt by racial group}
+
+
+edn_race_07 <- neg_nw_07 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(EDN_INST > 0, WGT)[1],
+            med = weighted.median(EDN_INST, WGT))
+
+edn_race_10 <- neg_nw_10 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(EDN_INST > 0, WGT)[1],
+            med = weighted.median(EDN_INST, WGT))
+
+edn_race_13 <- neg_nw_13 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(EDN_INST > 0, WGT)[1],
+            med = weighted.median(EDN_INST, WGT))
+
+edn_race_16 <- neg_nw_16 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(EDN_INST > 0, WGT)[1],
+            med = weighted.median(EDN_INST, WGT))
+
+edn_race_19 <- neg_nw_19 %>%
+  group_by(RACE) %>%
+  summarise(prop = wpct(EDN_INST > 0, WGT)[1],
+            med = weighted.median(EDN_INST, WGT))
+```
+
+
+```{r no student debt}
+
+
+scf_19_nodebt <- scf_19
+scf_19_nodebt$nw_no_edu <- scf_19_nodebt$NETWORTH + scf_19_nodebt$EDN_INST
+
+sum(scf_19$NETWORTH)
+sum(scf_19_nodebt$nw_no_edu)
+
+scf_19_nodebt <- mutate(scf_19_nodebt, 
+                 netdebt_status = ifelse(scf_19_nodebt$nw_no_edu < 0, 1, 0))
+
+neg_nw_19_nodebt <- filter(scf_19_nodebt, scf_19_nodebt$nw_no_edu < 0)
+
+wpct(scf_19_nodebt$netdebt_status, scf_19_nodebt$WGT)
+
+debts_noneg <- data.frame(RESDBT = weighted.median(neg_nw_19_nodebt$RESDBT,
+                                             neg_nw_19_nodebt$WGT)/1000,
+                  MRTHEL = weighted.median(neg_nw_19_nodebt$MRTHEL, 
+                                           neg_nw_19_nodebt$WGT)/1000,
+                   CCBAL = weighted.median(neg_nw_19_nodebt$CCBAL, 
+                                           neg_nw_19_nodebt$WGT)/1000,
+                   EDN_INST = weighted.median(neg_nw_19_nodebt$EDN_INST,
+                                            neg_nw_19_nodebt$WGT)/1000,
+                   VEH_INST = weighted.median(neg_nw_19$VEH_INST, 
+                                           neg_nw_19_nodebt$WGT)/1000,
+                   OTHDBT = weighted.median(neg_nw_19_nodebt$OTHDBT,
+                                            neg_nw_19_nodebt$WGT)/1000)
+
+weighted.median(neg_nw_19_nodebt$INCOME, neg_nw_19_nodebt$WGT)
+weighted.median(neg_nw_19$INCOME, neg_nw_19$WGT)
+
+wpct(neg_nw_19_nodebt$EDCL, neg_nw_19_nodebt$WGT)
+wpct(neg_nw_19$EDCL, neg_nw_19$WGT)
+
+wpct(neg_nw_19_nodebt$FAMSTRUCT == 1 & neg_nw_19_nodebt$HHSEX == 2, neg_nw_19_nodebt$WGT)
+wpct(neg_nw_19$FAMSTRUCT == 1 & neg_nw_19$HHSEX == 2, neg_nw_19$WGT)
+
+weighted.median(neg_nw_19_nodebt$ASSET, neg_nw_19_nodebt$WGT)
+weighted.median(neg_nw_19$ASSET, neg_nw_19$WGT)
+
+weighted.median(neg_nw_19_nodebt$AGE, neg_nw_19_nodebt$WGT)
+weighted.median(neg_nw_19$AGE, neg_nw_19$WGT)
+
+wpct(neg_nw_19_nodebt$RACE, neg_nw_19_nodebt$WGT)
+wpct(neg_nw_19$RACE, neg_nw_19$WGT)
+
+wpct(sum(neg_nw_19_nodebt$CCBAL > 0), neg_nw_19_nodebt$WGT)
+wpct(sum(neg_nw_19$CCBAL > 0), neg_nw_19$WGT)
+
+weighted.median(neg_nw_19_nodebt$CCBAL, neg_nw_19_nodebt$WGT)
+weighted.median(neg_nw_19$CCBAL, neg_nw_19$WGT)
+
+wpct(sum(neg_nw_19_nodebt$OTHDBT > 0), neg_nw_19_nodebt$WGT)
+wpct(sum(neg_nw_19$OTHDBT > 0), neg_nw_19$WGT)
+
+```
+
+
+```{r Assets no student debt}
+
+assets_holding_19_nodebt <- data.frame(LIQ_hold = wpct(neg_nw_19_nodebt$LIQ > 0, 
+                                           neg_nw_19_nodebt$WGT)[1],
+                                LIQ_med = weighted.median(neg_nw_19_nodebt$LIQ,
+                                                          neg_nw_19_nodebt$WGT),
+                                SEC_hold = wpct(neg_nw_19_nodebt$SECURITIES > 0, 
+                                           neg_nw_19_nodebt$WGT)[1],
+                                SEC_med = weighted.median(neg_nw_19_nodebt$SECURITIES,
+                                                          neg_nw_19_nodebt$WGT),
+                                RETQLIQ_hold = wpct(neg_nw_19_nodebt$RETQLIQ > 0, 
+                                           neg_nw_19_nodebt$WGT)[1],
+                                RETQLIQ_med = weighted.median(neg_nw_19_nodebt$RETQLIQ,
+                                                          neg_nw_19_nodebt$WGT),
+                                OFIN_hold = wpct(neg_nw_19_nodebt$OTHFIN_COMPLETE > 0, 
+                                           neg_nw_19_nodebt$WGT)[1],
+                                OFIN_med = weighted.median(neg_nw_19_nodebt$OTHFIN_COMPLETE,
+                                                          neg_nw_19_nodebt$WGT),
+                                VEHIC_hold = wpct(neg_nw_19_nodebt$VEHIC > 0, 
+                                           neg_nw_19_nodebt$WGT)[1],
+                                VEHIC_med = weighted.median(neg_nw_19_nodebt$VEHIC,
+                                                          neg_nw_19_nodebt$WGT),
+                                HOUSES_hold = wpct(neg_nw_19_nodebt$HOUSES > 0, 
+                                           neg_nw_19_nodebt$WGT)[1],
+                                HOUSES_med = weighted.median(neg_nw_19_nodebt$HOUSES,
+                                                          neg_nw_19_nodebt$WGT),
+                                NONRES_hold = wpct(neg_nw_19_nodebt$NONRES > 0, 
+                                           neg_nw_19_nodebt$WGT)[1],
+                                NONRES_med = weighted.median(neg_nw_19_nodebt$NONRES,
+                                                          neg_nw_19_nodebt$WGT),
+                                BUS_hold = wpct(neg_nw_19_nodebt$BUS > 0, 
+                                           neg_nw_19_nodebt$WGT)[1],
+                                BUS_med = weighted.median(neg_nw_19_nodebt$BUS,
+                                                          neg_nw_19_nodebt$WGT),
+                                ONFIN_hold = wpct(neg_nw_19_nodebt$OTHNFIN > 0, 
+                                           neg_nw_19_nodebt$WGT)[1],
+                                ONFIN_med = weighted.median(neg_nw_19_nodebt$OTHNFIN,
+                                                          neg_nw_19_nodebt$WGT)
+                                
+)
+
+```
+
+
+```{r no ccbal}
+
+scf_19_noccbal <- scf_19
+scf_19_noccbal$nw_no_ccbal <- scf_19_noccbal$NETWORTH + scf_19_noccbal$CCBAL
+
+sum(scf_19$NETWORTH)
+sum(scf_19_noccbal$nw_no_ccbal)
+
+scf_19_noccbal <- mutate(scf_19_noccbal, 
+                 netdebt_status = ifelse(scf_19_noccbal$nw_no_ccbal < 0, 1, 0))
+
+wpct(scf_19_noccbal$netdebt_status, scf_19_noccbal$WGT)
+wpct(scf_19$netdebt_status, scf_19$WGT)
+
+```
+
+
+```{r no auto}
+
+scf_19_noauto <- scf_19
+scf_19_noauto$nw_no_auto <- scf_19_noauto$NETWORTH + scf_19_noauto$VEH_INST
+
+sum(scf_19$NETWORTH)
+sum(scf_19_noauto$nw_no_auto)
+
+scf_19_noauto <- mutate(scf_19_noauto, 
+                 netdebt_status = ifelse(scf_19_noauto$nw_no_auto < 0, 1, 0))
+
+wpct(scf_19_noauto$netdebt_status, scf_19_noauto$WGT)
+wpct(scf_19$netdebt_status, scf_19$WGT)
+
+
+```
+
+
+
+```{r age distribution over time}
+
+
+wpct(neg_nw_19$age_group, neg_nw_19$WGT)
+wpct(neg_nw_16$age_group, neg_nw_16$WGT)
+wpct(neg_nw_13$age_group, neg_nw_13$WGT)
+wpct(neg_nw_10$age_group, neg_nw_10$WGT)
+wpct(neg_nw_07$age_group, neg_nw_07$WGT)
+wpct(neg_nw_04$age_group, neg_nw_04$WGT)
+wpct(neg_nw_01$age_group, neg_nw_01$WGT)
+wpct(neg_nw_98$age_group, neg_nw_98$WGT)
+wpct(neg_nw_95$age_group, neg_nw_95$WGT)
+wpct(neg_nw_92$age_group, neg_nw_92$WGT)
+wpct(neg_nw_89$age_group, neg_nw_89$WGT)
+
+wpct(scf_19$age_group, scf_19$WGT)
+wpct(scf_16$age_group, scf_16$WGT)
+wpct(scf_13$age_group, scf_13$WGT)
+wpct(scf_10$age_group, scf_10$WGT)
+wpct(scf_07$age_group, scf_07$WGT)
+
+
+debts_age_07 <- neg_nw_07 %>%
+  group_by(age_group) %>%
+  summarise(edu = wpct(EDN_INST > 0, WGT)[1],
+            mort = wpct(MRTHEL > 0, WGT)[1],
+            ccbal = wpct(CCBAL > 0, WGT)[1],
+            auto = wpct(VEH_INST  > 0, WGT)[1],
+            res = wpct(RESDBT > 0, WGT)[1],
+            odebt = wpct(ODEBT > 0, WGT)[1])
+
+
+debts_age_10 <- neg_nw_10 %>%
+  group_by(age_group) %>%
+  summarise(edu = wpct(EDN_INST > 0, WGT)[1],
+            mort = wpct(MRTHEL > 0, WGT)[1],
+            ccbal = wpct(CCBAL > 0, WGT)[1],
+            auto = wpct(VEH_INST  > 0, WGT)[1],
+            res = wpct(RESDBT > 0, WGT)[1],
+            odebt = wpct(ODEBT > 0, WGT)[1])
+
+debts_age_13 <- neg_nw_13 %>%
+  group_by(age_group) %>%
+  summarise(edu = wpct(EDN_INST > 0, WGT)[1],
+            mort = wpct(MRTHEL > 0, WGT)[1],
+            ccbal = wpct(CCBAL > 0, WGT)[1],
+            auto = wpct(VEH_INST  > 0, WGT)[1],
+            res = wpct(RESDBT > 0, WGT)[1],
+            odebt = wpct(ODEBT > 0, WGT)[1])
+
+debts_age_16 <- neg_nw_16 %>%
+  group_by(age_group) %>%
+  summarise(edu = wpct(EDN_INST > 0, WGT)[1],
+            mort = wpct(MRTHEL > 0, WGT)[1],
+            ccbal = wpct(CCBAL > 0, WGT)[1],
+            auto = wpct(VEH_INST  > 0, WGT)[1],
+            res = wpct(RESDBT > 0, WGT)[1],
+            odebt = wpct(ODEBT > 0, WGT)[1])
+
+
+debts_age_19 <- neg_nw_19 %>%
+  group_by(age_group) %>%
+  summarise(edu = wpct(EDN_INST > 0, WGT)[1],
+            mort = wpct(MRTHEL > 0, WGT)[1],
+            ccbal = wpct(CCBAL > 0, WGT)[1],
+            auto = wpct(VEH_INST  > 0, WGT)[1],
+            res = wpct(RESDBT > 0, WGT)[1],
+            odebt = wpct(ODEBT > 0, WGT)[1])
+            
+
+
+wpct(with_edu_07$age_group, with_edu_07$WGT)
+wpct(with_edu_10$age_group, with_edu_10$WGT)
+wpct(with_edu_13$age_group, with_edu_13$WGT)
+wpct(with_edu_16$age_group, with_edu_16$WGT)
+wpct(with_edu_19$age_group, with_edu_19$WGT)
+
+
+
+age_debt_balance_07 <- group_by
+
+young_nd_19 <- scf_19 %>%
+  group_by(age_group) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+young_nd_16 <- scf_16 %>%
+  group_by(age_group) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+young_nd_13 <- scf_13 %>%
+  group_by(age_group) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+young_nd_10 <- scf_10 %>%
+  group_by(age_group) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+young_nd_07 <- scf_07 %>%
+  group_by(age_group) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+young_only <- filter(scf_19, scf_19$age_group == "Under 35")
+
+compare_young <- young_only %>%
+  group_by(netdebt_status) %>%
+  summarise(inc = weighted.median(INCOME, WGT),
+            assets = weighted.median(ASSET, WGT),
+            debt = weighted.median(DEBT, WGT),
+            gender = wpct(HHSEX == 1, WGT)[1],
+            fam = wpct(FAMSTRUCT == 1, WGT)[1],
+            nonwhite = wpct(RACE != "White, non-Hispanic", WGT)[1],
+            single_mom = wpct(HHSEX == 2 & FAMSTRUCT == 1, WGT)[1],
+            age = weighted.median(AGE, WGT),
+            edu = wpct(EDCL == 4, WGT)[1],
+            auto = wpct(VEH_INST > 0, WGT)[1],
+            ccbal = wpct(CCBAL > 0, WGT)[1])
+
+```
+
+
+
+```{r single mothers}
+
+wpct(neg_nw_89$HHSEX == 2 & neg_nw_89$FAMSTRUCT == 1, neg_nw_89$WGT)
+wpct(neg_nw_92$HHSEX == 2 & neg_nw_92$FAMSTRUCT == 1, neg_nw_92$WGT)
+wpct(neg_nw_95$HHSEX == 2 & neg_nw_95$FAMSTRUCT == 1, neg_nw_95$WGT)
+wpct(neg_nw_98$HHSEX == 2 & neg_nw_98$FAMSTRUCT == 1, neg_nw_98$WGT)
+wpct(neg_nw_01$HHSEX == 2 & neg_nw_01$FAMSTRUCT == 1, neg_nw_01$WGT)
+wpct(neg_nw_04$HHSEX == 2 & neg_nw_04$FAMSTRUCT == 1, neg_nw_04$WGT)
+wpct(neg_nw_07$HHSEX == 2 & neg_nw_07$FAMSTRUCT == 1, neg_nw_07$WGT)
+wpct(neg_nw_10$HHSEX == 2 & neg_nw_10$FAMSTRUCT == 1, neg_nw_10$WGT)
+wpct(neg_nw_13$HHSEX == 2 & neg_nw_13$FAMSTRUCT == 1, neg_nw_13$WGT)
+wpct(neg_nw_16$HHSEX == 2 & neg_nw_16$FAMSTRUCT == 1, neg_nw_16$WGT)
+wpct(neg_nw_19$HHSEX == 2 & neg_nw_19$FAMSTRUCT == 1, neg_nw_19$WGT)
+
+
+wpct(scf_89$HHSEX == 2 & scf_89$FAMSTRUCT == 1, scf_89$WGT)
+wpct(scf_92$HHSEX == 2 & scf_92$FAMSTRUCT == 1, scf_92$WGT)
+wpct(scf_95$HHSEX == 2 & scf_95$FAMSTRUCT == 1, scf_95$WGT)
+wpct(scf_98$HHSEX == 2 & scf_98$FAMSTRUCT == 1, scf_98$WGT)
+wpct(scf_01$HHSEX == 2 & scf_01$FAMSTRUCT == 1, scf_01$WGT)
+wpct(scf_04$HHSEX == 2 & scf_04$FAMSTRUCT == 1, scf_04$WGT)
+wpct(scf_07$HHSEX == 2 & scf_07$FAMSTRUCT == 1, scf_07$WGT)
+wpct(scf_10$HHSEX == 2 & scf_10$FAMSTRUCT == 1, scf_10$WGT)
+wpct(scf_13$HHSEX == 2 & scf_13$FAMSTRUCT == 1, scf_13$WGT)
+wpct(scf_16$HHSEX == 2 & scf_16$FAMSTRUCT == 1, scf_16$WGT)
+wpct(scf_19$HHSEX == 2 & scf_19$FAMSTRUCT == 1, scf_19$WGT)
+
+
+```
+
+
+
+```{r student loan balance by race}
+
+edu_balance_race_07 <- with_edu_07 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(EDN_INST, WGT))
+
+edu_balance_race_10 <- with_edu_10 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(EDN_INST, WGT))
+
+edu_balance_race_13 <- with_edu_13 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(EDN_INST, WGT))
+
+edu_balance_race_16 <- with_edu_16 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(EDN_INST, WGT))
+
+edu_balance_race_19 <- with_edu_19 %>%
+  group_by(RACE) %>%
+  summarise(med = weighted.median(EDN_INST, WGT))
+  
+  
+weighted.median(with_edu_07$EDN_INST, with_edu_07$WGT)
+
+```
+
+
+```{r edu debt assets}
+
+
+weighted.median(with_edu_07$ASSET, with_edu_07$INCOME)
+weighted.median(with_edu_10$ASSET, with_edu_10$INCOME)
+weighted.median(with_edu_13$ASSET, with_edu_13$INCOME)
+weighted.median(with_edu_16$ASSET, with_edu_16$INCOME)
+weighted.median(with_edu_19$ASSET, with_edu_19$INCOME)
+
+race_edu_assets
+
+```
+
+
+
+```{r comparing income net debtors and all}
+
+
+weighted.median(neg_nw_92$INCOME, neg_nw_92$WGT)
+weighted.median(scf_92$INCOME, scf_92$WGT)
+
+weighted.median(neg_nw_95$INCOME, neg_nw_95$WGT)
+weighted.median(scf_95$INCOME, scf_95$WGT)
+
+weighted.median(neg_nw_13$INCOME, neg_nw_13$WGT)
+weighted.median(scf_13$INCOME, scf_13$WGT)
+
+weighted.median(neg_nw_16$INCOME, neg_nw_16$WGT)
+weighted.median(scf_16$INCOME, scf_16$WGT)
+
+weighted.median(neg_nw_19$INCOME, neg_nw_19$WGT)
+weighted.median(scf_19$INCOME, scf_19$WGT)
+
+weighted.median(neg_nw_07$INCOME, neg_nw_07$WGT)
+weighted.median(scf_07$INCOME, scf_07$WGT)
+
+weighted.median(neg_nw_10$INCOME, neg_nw_10$WGT)
+weighted.median(scf_10$INCOME, scf_10$WGT)
+
+weighted.median(neg_nw_13$INCOME, neg_nw_13$WGT)
+weighted.median(scf_13$INCOME, scf_13$WGT)
+
+weighted.median(neg_nw_16$INCOME, neg_nw_16$WGT)
+weighted.median(scf_16$INCOME, scf_16$WGT)
+
+weighted.median(neg_nw_19$INCOME, neg_nw_19$WGT)
+weighted.median(scf_19$INCOME, scf_19$WGT)
+
+
+```
+
+```{r edu overall}
+
+wpct(neg_nw_07$EDN_INST > 0, neg_nw_07$WGT)
+wpct(neg_nw_10$EDN_INST > 0, neg_nw_10$WGT)
+wpct(neg_nw_13$EDN_INST > 0, neg_nw_13$WGT)
+wpct(neg_nw_16$EDN_INST > 0, neg_nw_16$WGT)
+wpct(neg_nw_19$EDN_INST > 0, neg_nw_19$WGT)
+```
+
+
+```{r race and negative net worth}
+
+
+wpct(neg_nw_89$RACE, neg_nw_89$WGT)
+wpct(scf_89$RACE, scf_89$WGT)
+
+wpct(neg_nw_92$RACE, neg_nw_92$WGT)
+wpct(scf_92$RACE, scf_92$WGT)
+
+wpct(neg_nw_95$RACE, neg_nw_95$WGT)
+wpct(scf_95$RACE, scf_95$WGT)
+
+wpct(neg_nw_98$RACE, neg_nw_98$WGT)
+wpct(scf_98$RACE, scf_98$WGT)
+
+wpct(neg_nw_01$RACE, neg_nw_01$WGT)
+wpct(scf_01$RACE, scf_01$WGT)
+
+wpct(neg_nw_04$RACE, neg_nw_04$WGT)
+wpct(scf_04$RACE, scf_04$WGT)
+
+wpct(neg_nw_07$RACE, neg_nw_07$WGT)
+wpct(scf_07$RACE, scf_07$WGT)
+
+wpct(neg_nw_10$RACE, neg_nw_10$WGT)
+wpct(scf_10$RACE, scf_10$WGT)
+
+wpct(neg_nw_13$RACE, neg_nw_13$WGT)
+wpct(scf_13$RACE, scf_13$WGT)
+
+wpct(neg_nw_16$RACE, neg_nw_16$WGT)
+wpct(scf_16$RACE, scf_16$WGT)
+
+wpct(neg_nw_19$RACE, neg_nw_19$WGT)
+wpct(scf_19$RACE, scf_19$WGT)
+
+```
+
+
+```{r % of racial group in negative wealth}
+
+
+race_nd_89 <- scf_89 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_92 <- scf_92 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_95 <- scf_95 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_98 <- scf_98 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_01 <- scf_01 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_04 <- scf_04 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_07 <- scf_07 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_10 <- scf_10 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_13 <- scf_13 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_16 <- scf_16 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+race_nd_19 <- scf_19 %>%
+  group_by(RACE) %>%
+  summarise(wpct(NETWORTH < 0, WGT)[1])
+
+
+
+```
+
+
+
+
+```{r emergency}
+
+wpct(scf_19$EMERGBORR, scf_19$WGT)
+wpct(neg_nw_19$EMERGBORR, neg_nw_19$WGT)
+
+wpct(scf_19$EMERGPSTP, scf_19$WGT)
+wpct(neg_nw_19$EMERGPSTP, neg_nw_19$WGT)
+
+```
+
+
+```{r liquid savings}
+
+weighted.median(neg_nw_19$ASSET, neg_nw_19$WGT)
+weighted.median(neg_nw_19$LIQ, neg_nw_19$WGT)
+
+weighted.median(scf_19$LIQ, scf_19$WGT)
+
+```
+
+
+```{r debt stuggles}
+
+wpct(neg_nw_19$LATE, neg_nw_19$WGT)
+wpct(scf_19$LATE, scf_19$WGT)
+
+wpct(neg_nw_19$LATE, neg_nw_19$WGT)
+wpct(scf_19$LATE, scf_19$WGT)
+
+weighted.median(neg_nw_19$PIRTOTAL, neg_nw_19$WGT)
+weighted.median(scf_19$PIRTOTAL, scf_19$WGT)
+
+wpct(neg_nw_19$PIR40, neg_nw_19$WGT)
+wpct(scf_19$PIR40, scf_19$WGT)
+
+wpct(neg_nw_19$TURNDOWN, neg_nw_19$WGT)
+wpct(scf_19$TURNDOWN, scf_19$WGT)
+
+wpct(neg_nw_19$BNKRUPLAST5, neg_nw_19$WGT)
+wpct(scf_19$BNKRUPLAST5, scf_19$WGT)
+
+```
+
+
+
+
+
+```{r broad comparisons}
+
+weighted.median(neg_nw_19$INCOME, neg_nw_19$WGT)
+weighted.median(scf_19$INCOME, scf_19$WGT)
+
+
+weighted.median(neg_nw_19$AGE, neg_nw_19$WGT)
+weighted.median(scf_19$AGE, scf_19$WGT)
+
+wpct(neg_nw_19$HHSEX, neg_nw_19$WGT)
+wpct(scf_19$HHSEX, scf_19$WGT)
+
+wpct(neg_nw_19$RACE, neg_nw_19$WGT)
+wpct(scf_19$RACE, scf_19$WGT)
+
+sum(wpct(neg_nw_19$FAMSTRUCT, neg_nw_19$WGT)[1:3])
+sum(wpct(scf_19$FAMSTRUCT, scf_19$WGT)[1:3])
+
+wpct(neg_nw_19$FAMSTRUCT == 1 & neg_nw_19$HHSEX == 2, neg_nw_19$WGT)
+wpct(scf_19$FAMSTRUCT == 1 & scf_19$HHSEX == 2, scf_19$WGT)
+
+weighted.median(neg_nw_19$DEBT2INC, neg_nw_19$WGT)
+weighted.median(scf_19$DEBT2INC, scf_19$WGT)
+
+neg_nw_19 <- mutate(neg_nw_19, DTI_monthly = (DEBT/12)/(INCOME/12))
+weighted.median(neg_nw_19$DTI_monthly, neg_nw_19$WGT)
+weighted.median(scf_19$DTI_monthly, neg_nw_19$WGT)
+
+
+```
+
+
+```{r educ level}
+
+wpct(edu_debt_19$EDCL, edu_debt_19$WGT)
+
+edu_debt_scf_19 <- filter(scf_19, scf_19$EDN_INST > 0)
+
+wpct(edu_debt_scf_19$EDCL, edu_debt_scf_19$WGT)
+
+```
+
+
+```{r DTI}
+
+
+pir_40 <- scf_19 %>%
+  group_by(RACE) %>%
+  summarise(wpct(PIR40, WGT)[2])
+
+pirtot <- scf_19 %>%
+  group_by(RACE) %>%
+  summarise(weighted.median(PIRTOTAL, WGT),
+            weighted.mean(PIRTOTAL, WGT))
+
+
+```
+
+
+```{r median net debt by race}
+
+med_nd_race <- neg_nw_19 %>%
+  group_by(RACE) %>%
+  summarise(weighted.median(NETWORTH, WGT))
+
+
+```
+
